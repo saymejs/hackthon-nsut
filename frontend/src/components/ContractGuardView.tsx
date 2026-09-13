@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { ethToUsd, formatEthAndUsd } from "@/lib/formatters";
+import { ShieldIcon, SlidersIcon, CheckCircleIcon, CodeIcon } from "@/components/Icons";
 
 interface ContractGuardProps {
   vaultAddress: string;
@@ -46,7 +47,7 @@ export default function ContractGuardView({
         <div>
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl neu-raised-xs flex items-center justify-center text-blue-600">
-              <span className="material-symbols-outlined text-[20px]">shield</span>
+              <ShieldIcon className="w-5 h-5 text-blue-600" />
             </div>
             <h2 className="font-bold text-lg text-slate-900 tracking-tight">
               EVM Smart Contract Guard Specifications
@@ -160,7 +161,7 @@ export default function ContractGuardView({
       <div className="p-8 rounded-3xl neu-raised flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-blue-600 text-[22px]">tune</span>
+            <SlidersIcon className="w-5 h-5 text-blue-600" />
             <h3 className="font-bold text-base text-slate-900">Owner Administration: Update Spend Ceiling</h3>
           </div>
           <span className="text-xs font-mono-code text-slate-500">Function: setLimit(uint256 _newLimit)</span>
@@ -188,14 +189,14 @@ export default function ContractGuardView({
             type="submit"
             className="neu-btn-primary px-6 py-2.5 rounded-2xl font-bold text-xs cursor-pointer flex items-center gap-2"
           >
-            <span className="material-symbols-outlined text-[16px]">save</span>
+            <CheckCircleIcon className="w-4 h-4" />
             <span>Broadcast setLimit() Update</span>
           </button>
         </form>
 
         {updateStatus && (
           <div className="p-3 rounded-2xl neu-inset-sm font-mono-code text-xs text-emerald-700 flex items-center gap-2">
-            <span className="material-symbols-outlined text-[18px] text-emerald-600">check_circle</span>
+            <CheckCircleIcon className="w-4 h-4 text-emerald-600" />
             <span>{updateStatus}</span>
           </div>
         )}
@@ -205,7 +206,7 @@ export default function ContractGuardView({
       <div className="p-6 rounded-3xl neu-raised flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-blue-600 text-[20px]">code</span>
+            <CodeIcon className="w-5 h-5 text-blue-600" />
             <h3 className="font-bold text-sm text-slate-800">AgentVault.sol Source Code Excerpt</h3>
           </div>
           <span className="font-mono-code text-xs text-slate-500">Contract: {vaultAddress}</span>

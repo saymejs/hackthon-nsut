@@ -2,6 +2,20 @@
 
 import React, { RefObject } from "react";
 import { ethToUsd } from "@/lib/formatters";
+import {
+  BankIcon,
+  SpeedIcon,
+  CheckCircleIcon,
+  KeyIcon,
+  LockIcon,
+  CopyIcon,
+  SearchIcon,
+  FlaskIcon,
+  PlayIcon,
+  AlertTriangleIcon,
+  WarningIcon,
+  BoltIcon,
+} from "@/components/Icons";
 
 export interface AuditLog {
   id: string;
@@ -129,7 +143,7 @@ export default function OverviewView({
             <div className="flex items-center justify-between gap-2 mb-4">
               <div className="flex items-center gap-2 text-blue-600">
                 <div className="w-9 h-9 rounded-xl neu-raised-xs flex items-center justify-center text-blue-600">
-                  <span className="material-symbols-outlined text-[20px]">account_balance</span>
+                  <BankIcon className="w-5 h-5 text-blue-600" />
                 </div>
                 <span className="font-bold text-slate-800 text-base tracking-tight">
                   Total Vault Balance
@@ -187,7 +201,7 @@ export default function OverviewView({
             <div className="flex items-center justify-between gap-2 mb-4">
               <div className="flex items-center gap-2 text-slate-800">
                 <div className="w-9 h-9 rounded-xl neu-raised-xs flex items-center justify-center text-blue-600">
-                  <span className="material-symbols-outlined text-[20px]">speed</span>
+                  <SpeedIcon className="w-5 h-5 text-blue-600" />
                 </div>
                 <span className="font-bold text-slate-800 text-base tracking-tight">
                   Spending Cap &amp; Allowance
@@ -231,9 +245,7 @@ export default function OverviewView({
             </div>
           </div>
           <div className="mt-4 pt-2 flex items-center gap-2 text-slate-600 font-mono-code text-xs">
-            <span className="material-symbols-outlined text-[18px] text-emerald-600">
-              verified_user
-            </span>
+            <CheckCircleIcon className="w-4 h-4 text-emerald-600" />
             <span className="text-[11px]">
               {headroomEth} ETH (~{ethToUsd(headroomEth, ethPriceUsd)}) unallocated headroom remaining in epoch #41
             </span>
@@ -246,14 +258,14 @@ export default function OverviewView({
             <div className="flex items-center justify-between gap-2 mb-3">
               <div className="flex items-center gap-2 text-slate-800">
                 <div className="w-9 h-9 rounded-xl neu-raised-xs flex items-center justify-center text-blue-600">
-                  <span className="material-symbols-outlined text-[20px]">key</span>
+                  <KeyIcon className="w-5 h-5 text-blue-600" />
                 </div>
                 <span className="font-bold text-slate-800 text-base tracking-tight">
                   Agent Authority Key
                 </span>
               </div>
               <span className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full neu-inset-sm text-emerald-600 font-mono-code font-bold">
-                <span className="material-symbols-outlined text-[12px]">lock</span>
+                <LockIcon className="w-3 h-3 text-emerald-600" />
                 <span>Authorized Signer Only</span>
               </span>
             </div>
@@ -267,11 +279,11 @@ export default function OverviewView({
                 {agentAddress}
               </span>
               <button
-                className="material-symbols-outlined text-[16px] text-slate-400 hover:text-blue-600 transition-colors cursor-pointer"
+                className="text-slate-400 hover:text-blue-600 transition-colors cursor-pointer p-0.5"
                 onClick={() => copyToClipboard(agentAddress)}
                 title="Copy public key"
               >
-                content_copy
+                <CopyIcon className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -382,9 +394,7 @@ export default function OverviewView({
             </div>
             {/* Inset Neumorphic Search Input */}
             <div className="flex items-center gap-2 neu-inset px-3 py-1.5 rounded-full">
-              <span className="material-symbols-outlined text-[16px] text-slate-400">
-                search
-              </span>
+              <SearchIcon className="w-4 h-4 text-slate-400" />
               <input
                 className="bg-transparent font-mono-code text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none w-36"
                 placeholder="Filter invoice / hash..."
@@ -420,11 +430,11 @@ export default function OverviewView({
                       <span className="inline-flex items-center gap-1.5">
                         {row.contentHash}
                         <button
-                          className="material-symbols-outlined text-[13px] text-slate-400 hover:text-blue-600 transition-colors cursor-pointer"
+                          className="text-slate-400 hover:text-blue-600 transition-colors cursor-pointer p-0.5"
                           onClick={() => copyToClipboard(row.contentHash)}
                           title="Copy Content Hash"
                         >
-                          content_copy
+                          <CopyIcon className="w-3.5 h-3.5" />
                         </button>
                       </span>
                     </td>
@@ -457,7 +467,7 @@ export default function OverviewView({
           <div>
             <div className="flex items-center gap-2">
               <div className="w-9 h-9 rounded-2xl neu-raised-xs flex items-center justify-center text-blue-600">
-                <span className="material-symbols-outlined text-[20px]">science</span>
+                <FlaskIcon className="w-5 h-5 text-blue-600" />
               </div>
               <span className="font-bold text-slate-900 text-lg tracking-tight">
                 Interactive Demo &amp; Attack Simulation Controls
@@ -481,7 +491,7 @@ export default function OverviewView({
             id="btn-standard-purchase"
             onClick={triggerNormalPurchase}
           >
-            <span className="material-symbols-outlined text-[18px]">play_arrow</span>
+            <PlayIcon className="w-4 h-4" />
             <span>Trigger Standard Purchase (0.001 ETH / ~$2.50)</span>
           </button>
 
@@ -491,7 +501,7 @@ export default function OverviewView({
             id="btn-attack-sim"
             onClick={triggerAttackSimulation}
           >
-            <span className="material-symbols-outlined text-[18px]">gpp_bad</span>
+            <AlertTriangleIcon className="w-4 h-4" />
             <span>Simulate Overspend Attack (Attempt 0.1 ETH / ~$250.00)</span>
           </button>
         </div>
@@ -506,9 +516,7 @@ export default function OverviewView({
           >
             <div className="flex items-start gap-4">
               <div className="p-3 rounded-2xl neu-raised-xs text-red-600 flex items-center justify-center bg-[#fdf2f2]">
-                <span className="material-symbols-outlined text-[24px]">
-                  security_update_warning
-                </span>
+                <WarningIcon className="w-6 h-6 text-red-600" />
               </div>
               <div>
                 <div className="text-sm font-bold text-red-700 tracking-tight">
@@ -529,9 +537,7 @@ export default function OverviewView({
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <div className="px-4 py-2 rounded-full neu-inset-sm font-mono-code text-xs text-slate-700 flex items-center gap-2">
-                <span className="material-symbols-outlined text-emerald-600 text-[16px]">
-                  local_gas_station
-                </span>
+                <BoltIcon className="w-4 h-4 text-emerald-600" />
                 <span>
                   Gas Used:{" "}
                   <strong className="text-blue-600 font-bold">{revertDetails.gasUsed}</strong>{" "}

@@ -2,6 +2,14 @@
 
 import React, { useState } from "react";
 import { ethToUsd } from "@/lib/formatters";
+import {
+  PolicyIcon,
+  LockIcon,
+  CheckCircleIcon,
+  ReplayIcon,
+  BoltIcon,
+  ShieldIcon,
+} from "@/components/Icons";
 
 interface PoliciesViewProps {
   spendLimitEth: string;
@@ -21,7 +29,7 @@ export default function PoliciesView({ spendLimitEth, ethPriceUsd }: PoliciesVie
         <div>
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl neu-raised-xs flex items-center justify-center text-blue-600">
-              <span className="material-symbols-outlined text-[20px]">policy</span>
+              <PolicyIcon className="w-5 h-5 text-blue-600" />
             </div>
             <h2 className="font-bold text-lg text-slate-900 tracking-tight">
               Active Security Guard Policies
@@ -47,7 +55,7 @@ export default function PoliciesView({ spendLimitEth, ethPriceUsd }: PoliciesVie
           <div>
             <div className="flex items-center justify-between gap-2 mb-3">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-blue-600 text-[20px]">lock</span>
+                <LockIcon className="w-5 h-5 text-blue-600" />
                 <span className="font-bold text-slate-900 text-sm">Hard Spend Ceiling Invariant</span>
               </div>
               <span className="px-2.5 py-0.5 rounded-full neu-inset-sm text-blue-600 font-mono-code text-[10px] font-bold">
@@ -64,7 +72,7 @@ export default function PoliciesView({ spendLimitEth, ethPriceUsd }: PoliciesVie
             </div>
           </div>
           <div className="mt-4 pt-2 text-[11px] font-mono-code text-emerald-600 flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[16px]">verified</span>
+            <CheckCircleIcon className="w-4 h-4 text-emerald-600" />
             <span>Enforced by EVM Bytecode Invariant</span>
           </div>
         </div>
@@ -74,7 +82,7 @@ export default function PoliciesView({ spendLimitEth, ethPriceUsd }: PoliciesVie
           <div>
             <div className="flex items-center justify-between gap-2 mb-3">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-emerald-600 text-[20px]">replay</span>
+                <ReplayIcon className="w-5 h-5 text-emerald-600" />
                 <span className="font-bold text-slate-900 text-sm">Strict Idempotency &amp; Replay Guard</span>
               </div>
               {/* Tactile Toggle */}
@@ -109,7 +117,7 @@ export default function PoliciesView({ spendLimitEth, ethPriceUsd }: PoliciesVie
           <div>
             <div className="flex items-center justify-between gap-2 mb-3">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-blue-600 text-[20px]">fact_check</span>
+                <CheckCircleIcon className="w-5 h-5 text-blue-600" />
                 <span className="font-bold text-slate-900 text-sm">Destination Provider Whitelist</span>
               </div>
               <button
@@ -143,7 +151,7 @@ export default function PoliciesView({ spendLimitEth, ethPriceUsd }: PoliciesVie
           <div>
             <div className="flex items-center justify-between gap-2 mb-3">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-amber-600 text-[20px]">electric_bolt</span>
+                <BoltIcon className="w-5 h-5 text-amber-600" />
                 <span className="font-bold text-slate-900 text-sm">Automated Circuit Breaker</span>
               </div>
               <button
@@ -176,7 +184,7 @@ export default function PoliciesView({ spendLimitEth, ethPriceUsd }: PoliciesVie
       {/* Threat Containment Ledger */}
       <div className="p-6 rounded-3xl neu-raised flex flex-col gap-3">
         <h3 className="font-bold text-sm text-slate-800 flex items-center gap-2">
-          <span className="material-symbols-outlined text-emerald-600 text-[18px]">verified_user</span>
+          <ShieldIcon className="w-4 h-4 text-emerald-600" />
           <span>Threat Containment Incident Report</span>
         </h3>
         <div className="p-4 rounded-2xl neu-inset-sm font-mono-code text-xs text-slate-700 space-y-2">

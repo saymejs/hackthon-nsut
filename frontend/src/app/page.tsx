@@ -13,6 +13,18 @@ import ContractGuardView from "@/components/ContractGuardView";
 import TransactionsView from "@/components/TransactionsView";
 import PoliciesView from "@/components/PoliciesView";
 import NodeLogsView from "@/components/NodeLogsView";
+import {
+  DashboardIcon,
+  ShieldIcon,
+  ReceiptIcon,
+  PolicyIcon,
+  TerminalIcon,
+  TrendingUpIcon,
+  WalletIcon,
+  CopyIcon,
+  WarningIcon,
+  PersonIcon,
+} from "@/components/Icons";
 
 export default function Home() {
   // Navigation State
@@ -424,7 +436,7 @@ export default function Home() {
 
             {/* ETH Live Oracle Price Pill */}
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full neu-inset-sm">
-              <span className="material-symbols-outlined text-[15px] text-blue-600">trending_up</span>
+              <TrendingUpIcon className="w-4 h-4 text-blue-600" />
               <span className="font-mono-code text-xs text-slate-700 font-medium">
                 ETH Oracle: <strong className="text-slate-900 font-bold">${ethPriceUsd.toLocaleString()}</strong>
               </span>
@@ -446,9 +458,7 @@ export default function Home() {
           <div className="flex items-center gap-3">
             {/* Wallet Address Pill */}
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full neu-inset-sm">
-              <span className="material-symbols-outlined text-[17px] text-blue-600">
-                account_balance_wallet
-              </span>
+              <WalletIcon className="w-4 h-4 text-blue-600" />
               <span className="font-mono-code text-xs text-slate-700 font-semibold">
                 {ownerAddress.substring(0, 6)}...{ownerAddress.substring(ownerAddress.length - 4)}
               </span>
@@ -457,7 +467,7 @@ export default function Home() {
                 onClick={() => copyToClipboard(ownerAddress)}
                 title="Copy address"
               >
-                <span className="material-symbols-outlined text-[14px]">content_copy</span>
+                <CopyIcon className="w-3.5 h-3.5 text-slate-400" />
               </button>
             </div>
 
@@ -473,13 +483,13 @@ export default function Home() {
                 )
               }
             >
-              <span className="material-symbols-outlined text-[16px]">warning</span>
+              <WarningIcon className="w-4 h-4 text-red-600" />
               <span>Emergency Withdraw</span>
             </button>
 
             {/* User Profile Avatar Pill */}
             <div className="w-9 h-9 rounded-full neu-raised-xs flex items-center justify-center text-slate-700">
-              <span className="material-symbols-outlined text-[20px]">person</span>
+              <PersonIcon className="w-5 h-5 text-slate-700" />
             </div>
           </div>
         </div>
@@ -503,13 +513,11 @@ export default function Home() {
                   : "text-slate-600 hover:text-slate-900 neu-btn font-semibold"
               }`}
             >
-              <span
-                className={`material-symbols-outlined text-[20px] ${
+              <DashboardIcon
+                className={`w-5 h-5 ${
                   activeTab === "overview" ? "text-blue-600" : "text-slate-500"
                 }`}
-              >
-                dashboard
-              </span>
+              />
               <span className="text-xs tracking-wide">Overview Telemetry</span>
             </button>
 
@@ -522,13 +530,11 @@ export default function Home() {
                   : "text-slate-600 hover:text-slate-900 neu-btn font-semibold"
               }`}
             >
-              <span
-                className={`material-symbols-outlined text-[20px] ${
+              <ShieldIcon
+                className={`w-5 h-5 ${
                   activeTab === "contract-guard" ? "text-blue-600" : "text-slate-500"
                 }`}
-              >
-                shield
-              </span>
+              />
               <span className="text-xs tracking-wide">Contract Guard</span>
             </button>
 
@@ -541,13 +547,11 @@ export default function Home() {
                   : "text-slate-600 hover:text-slate-900 neu-btn font-semibold"
               }`}
             >
-              <span
-                className={`material-symbols-outlined text-[20px] ${
+              <ReceiptIcon
+                className={`w-5 h-5 ${
                   activeTab === "transactions" ? "text-blue-600" : "text-slate-500"
                 }`}
-              >
-                receipt_long
-              </span>
+              />
               <span className="text-xs tracking-wide">Agent Transactions</span>
             </button>
 
@@ -560,13 +564,11 @@ export default function Home() {
                   : "text-slate-600 hover:text-slate-900 neu-btn font-semibold"
               }`}
             >
-              <span
-                className={`material-symbols-outlined text-[20px] ${
+              <PolicyIcon
+                className={`w-5 h-5 ${
                   activeTab === "policies" ? "text-blue-600" : "text-slate-500"
                 }`}
-              >
-                policy
-              </span>
+              />
               <span className="text-xs tracking-wide">Security Policies</span>
             </button>
 
@@ -579,13 +581,11 @@ export default function Home() {
                   : "text-slate-600 hover:text-slate-900 neu-btn font-semibold"
               }`}
             >
-              <span
-                className={`material-symbols-outlined text-[20px] ${
+              <TerminalIcon
+                className={`w-5 h-5 ${
                   activeTab === "node-logs" ? "text-blue-600" : "text-slate-500"
                 }`}
-              >
-                terminal
-              </span>
+              />
               <span className="text-xs tracking-wide">Node Logs</span>
             </button>
           </nav>

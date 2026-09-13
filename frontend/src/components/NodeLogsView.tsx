@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { TerminalIcon, TrendingUpIcon, CopyIcon, CheckCircleIcon, TrashIcon } from "@/components/Icons";
 
 interface LogEntry {
   id: string;
@@ -111,7 +112,7 @@ export default function NodeLogsView() {
         <div>
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl neu-raised-xs flex items-center justify-center text-blue-600">
-              <span className="material-symbols-outlined text-[20px]">terminal</span>
+              <TerminalIcon className="w-5 h-5 text-blue-600" />
             </div>
             <h2 className="font-bold text-lg text-slate-900 tracking-tight">
               EVM RPC &amp; Node Diagnostic Logs
@@ -130,23 +131,25 @@ export default function NodeLogsView() {
             onClick={addPingLog}
             className="neu-btn px-3.5 py-1.5 rounded-2xl text-xs font-bold text-blue-600 flex items-center gap-1.5 cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[16px]">sensors</span>
+            <TrendingUpIcon className="w-4 h-4" />
             <span>Simulate RPC Call</span>
           </button>
           <button
             onClick={copyLogs}
             className="neu-btn px-3.5 py-1.5 rounded-2xl text-xs font-bold text-slate-700 flex items-center gap-1.5 cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[16px]">
-              {copied ? "check" : "content_copy"}
-            </span>
+            {copied ? (
+              <CheckCircleIcon className="w-3.5 h-3.5 text-emerald-600" />
+            ) : (
+              <CopyIcon className="w-3.5 h-3.5 text-slate-500" />
+            )}
             <span>{copied ? "Copied!" : "Copy Logs"}</span>
           </button>
           <button
             onClick={clearLogs}
             className="neu-btn-danger px-3.5 py-1.5 rounded-2xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[16px]">delete_sweep</span>
+            <TrashIcon className="w-4 h-4" />
             <span>Clear</span>
           </button>
         </div>
