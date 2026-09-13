@@ -55,6 +55,20 @@ export const VAULT_ABI = [
     type: "function",
   },
   {
+    inputs: [{ internalType: "uint256", name: "_newLimit", type: "uint256" }],
+    name: "setLimit",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "address", name: "_newAgent", type: "address" }],
+    name: "setAgent",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
     anonymous: false,
     inputs: [
       { indexed: true, internalType: "string", name: "paymentId", type: "string" },

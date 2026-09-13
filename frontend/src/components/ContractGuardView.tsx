@@ -4,6 +4,9 @@ import React, { useState } from "react";
 import { ethToUsd, formatEthAndUsd } from "@/lib/formatters";
 import { ShieldIcon, SlidersIcon, CheckCircleIcon, CodeIcon } from "@/components/Icons";
 import Logo from "@/components/Logo";
+import { useWriteContract } from "wagmi";
+import { parseEther } from "viem";
+import { VAULT_ABI } from "@/lib/contract";
 
 interface ContractGuardProps {
   vaultAddress: string;
@@ -14,6 +17,9 @@ interface ContractGuardProps {
   totalSpentEth: string;
   ethPriceUsd: number;
   onUpdateLimit: (newLimit: string) => void;
+  isOwner?: boolean;
+  connectedAddress?: string;
+  isConnected?: boolean;
 }
 
 export default function ContractGuardView({
@@ -25,20 +31,49 @@ export default function ContractGuardView({
   totalSpentEth,
   ethPriceUsd,
   onUpdateLimit,
+  isOwner = false,
+  connectedAddress,
+  isConnected = false,
 }: ContractGuardProps) {
   const [inputLimit, setInputLimit] = useState(spendLimitEth);
   const [updateStatus, setUpdateStatus] = useState<string | null>(null);
 
-  const handleSetLimit = (e: React.FormEvent) => {
+  const { writeContractAsync: executeSetLimit, isPending: isSettingLimit } = useWriteContract();
+
+  const handleSetLimit = async (e: React.FormEvent) => {
     e.preventDefault();
     const val = parseFloat(inputLimit);
     if (isNaN(val) || val <= 0) {
       alert("Please enter a valid ETH spend limit");
       return;
     }
+
+    if (isOwner) {
+      try {
+        const txHash = await executeSetLimit({
+          address: vaultAddress as `0x${string}`,
+          abi: VAULT_ABI,
+          functionName: "setLimit",
+          args: [parseEther(val.toFixed(4))],
+        });
+        onUpdateLimit(val.toFixed(4));
+        setUpdateStatus(
+          `On-chain setLimit() broadcast! Tx Hash: ${txHash.slice(0, 14)}... Spend limit locked at ${val.toFixed(4)} ETH (~${ethToUsd(val, ethPriceUsd)}).`
+        );
+        setTimeout(() => setUpdateStatus(null), 6000);
+        return;
+      } catch (err: any) {
+        alert(`On-chain transaction failed: ${err?.shortMessage || err?.message}`);
+        return;
+      }
+    }
+
+    // Observer / simulation mode
     onUpdateLimit(val.toFixed(4));
-    setUpdateStatus(`Successfully updated spend limit to ${val.toFixed(4)} ETH (~${ethToUsd(val, ethPriceUsd)}) on-chain.`);
-    setTimeout(() => setUpdateStatus(null), 3500);
+    setUpdateStatus(
+      `Simulated spend limit updated to ${val.toFixed(4)} ETH (~${ethToUsd(val, ethPriceUsd)}). Connect owner wallet (${ownerAddress.slice(0, 6)}...${ownerAddress.slice(-4)}) to broadcast live on-chain.`
+    );
+    setTimeout(() => setUpdateStatus(null), 5000);
   };
 
   return (
@@ -163,12 +198,21 @@ export default function ContractGuardView({
 
       {/* Interactive Owner Control: Update Spend Limit */}
       <div className="p-8 rounded-3xl neu-raised flex flex-col gap-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <SlidersIcon className="w-5 h-5 text-blue-600" />
             <h3 className="font-bold text-base text-slate-900">Owner Administration: Update Spend Ceiling</h3>
           </div>
-          <span className="text-xs font-mono-code text-slate-500">Function: setLimit(uint256 _newLimit)</span>
+          {isOwner ? (
+            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full neu-inset-sm text-emerald-600 font-mono-code text-[11px] font-bold">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Owner Mode: Live EVM Write</span>
+            </span>
+          ) : (
+            <span className="text-xs font-mono-code text-slate-500">
+              {isConnected ? "Connected (Read-Only Observer)" : "Wallet Disconnected (Simulation Mode)"}
+            </span>
+          )}
         </div>
         <p className="text-xs text-slate-600">
           As the human vault governor, you can increase or decrease the agent&apos;s cumulative allowance at any time.
@@ -191,10 +235,17 @@ export default function ContractGuardView({
 
           <button
             type="submit"
+            disabled={isSettingLimit}
             className="neu-btn-primary px-6 py-2.5 rounded-2xl font-bold text-xs cursor-pointer flex items-center gap-2"
           >
             <CheckCircleIcon className="w-4 h-4" />
-            <span>Broadcast setLimit() Update</span>
+            <span>
+              {isSettingLimit
+                ? "Signing On-Chain..."
+                : isOwner
+                ? "Broadcast setLimit() On-Chain"
+                : "Simulate setLimit() Update"}
+            </span>
           </button>
         </form>
 

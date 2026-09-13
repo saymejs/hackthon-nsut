@@ -46,7 +46,7 @@ export function VaultShieldLogo({
       role="img"
       aria-label={ALT_TEXT}
     >
-      <title>{ALT_TEXT} - Vault Shield</title>
+      <title>{`${ALT_TEXT} - Vault Shield`}</title>
       <defs>
         <linearGradient id="vsl_shieldGrad" x1="16" y1="16" x2="112" y2="112" gradientUnits="userSpaceOnUse">
           <stop stopColor="#2563eb" />
@@ -110,7 +110,7 @@ export function AiAgentKeyLogo({
       role="img"
       aria-label={ALT_TEXT}
     >
-      <title>{ALT_TEXT} - AI Agent Key</title>
+      <title>{`${ALT_TEXT} - AI Agent Key`}</title>
       <defs>
         <linearGradient id="aak_keyGrad" x1="20" y1="20" x2="108" y2="108" gradientUnits="userSpaceOnUse">
           <stop stopColor="#3b82f6" />
@@ -170,7 +170,7 @@ export function EvmContractGuardLogo({
       role="img"
       aria-label={ALT_TEXT}
     >
-      <title>{ALT_TEXT} - EVM Contract Guard</title>
+      <title>{`${ALT_TEXT} - EVM Contract Guard`}</title>
       <defs>
         <linearGradient id="ecg_ethTop" x1="64" y1="20" x2="96" y2="70" gradientUnits="userSpaceOnUse">
           <stop stopColor="#38bdf8" />
@@ -223,7 +223,7 @@ export function Http402StreamLogo({
       role="img"
       aria-label={ALT_TEXT}
     >
-      <title>{ALT_TEXT} - HTTP 402 Stream</title>
+      <title>{`${ALT_TEXT} - HTTP 402 Stream`}</title>
       <defs>
         <linearGradient id="h4s_boltGrad" x1="70" y1="24" x2="48" y2="104" gradientUnits="userSpaceOnUse">
           <stop stopColor="#38bdf8" />
@@ -279,7 +279,7 @@ export function TelemetryNodeLogo({
       role="img"
       aria-label={ALT_TEXT}
     >
-      <title>{ALT_TEXT} - Telemetry Node</title>
+      <title>{`${ALT_TEXT} - Telemetry Node`}</title>
       <defs>
         <linearGradient id="tnl_radarSweep" x1="64" y1="64" x2="104" y2="34" gradientUnits="userSpaceOnUse">
           <stop stopColor="#10b981" stopOpacity="0.6" />
@@ -333,7 +333,7 @@ export function BrandMinimalLogo({
       role="img"
       aria-label={ALT_TEXT}
     >
-      <title>{ALT_TEXT} - Minimal Badge</title>
+      <title>{`${ALT_TEXT} - Minimal Badge`}</title>
       <defs>
         <linearGradient id="bml_minGrad" x1="16" y1="16" x2="112" y2="112" gradientUnits="userSpaceOnUse">
           <stop stopColor="#2563eb" />

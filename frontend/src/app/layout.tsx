@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: "Agent SafePay // EVM Vault Guard",
@@ -26,7 +27,7 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-[#e8ecf2] text-slate-800 antialiased font-sans">
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

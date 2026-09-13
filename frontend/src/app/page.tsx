@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { formatEther } from "viem";
+import { formatEther, parseEther } from "viem";
 import { publicClient, VAULT_ADDRESS, VAULT_ABI } from "@/lib/contract";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useAccount, useWriteContract } from "wagmi";
 import {
   DEFAULT_ETH_PRICE_USD,
   ethToUsd,
@@ -28,6 +30,9 @@ import {
 } from "@/components/Icons";
 
 export default function Home() {
+  // Wagmi Web3 Wallet State & Owner Detection
+  const { address: connectedAddress, isConnected } = useAccount();
+
   // Navigation State
   const [activeTab, setActiveTab] = useState<
     "overview" | "contract-guard" | "transactions" | "policies" | "node-logs"
@@ -258,6 +263,49 @@ export default function Home() {
   const spentNum = parseFloat(totalSpentEth) || 0.003;
   const headroomEth = Math.max(limitNum - spentNum, 0).toFixed(4);
 
+  // Owner Guard Verification: connected wallet matches on-chain AgentVault owner
+  const isOwner = Boolean(
+    isConnected &&
+      connectedAddress &&
+      ownerAddress &&
+      connectedAddress.toLowerCase() === ownerAddress.toLowerCase()
+  );
+
+  const { writeContractAsync: executeWithdraw, isPending: isWithdrawPending } = useWriteContract();
+
+  const handleEmergencyWithdraw = async () => {
+    if (!isConnected) {
+      alert("Please connect your Web3 wallet using the Connect Wallet button.");
+      return;
+    }
+    if (!isOwner) {
+      alert(
+        `Access Denied: Connected wallet (${connectedAddress?.slice(0, 6)}...${connectedAddress?.slice(
+          -4
+        )}) is NOT the Vault Owner (${ownerAddress.slice(0, 6)}...${ownerAddress.slice(
+          -4
+        )}).\n\nAgentVault consensus strictly prevents non-owner withdrawals.`
+      );
+      return;
+    }
+    try {
+      const balanceWei = parseEther(vaultBalanceEth || "0");
+      if (balanceWei <= BigInt(0)) {
+        alert("Vault balance is 0 ETH. Nothing to withdraw.");
+        return;
+      }
+      const txHash = await executeWithdraw({
+        address: VAULT_ADDRESS,
+        abi: VAULT_ABI,
+        functionName: "withdraw",
+        args: [balanceWei],
+      });
+      alert(`Emergency Withdrawal Broadcast!\n\nTx Hash: ${txHash}\nFunds returned to owner.`);
+    } catch (err: any) {
+      alert(`Withdrawal failed: ${err?.shortMessage || err?.message}`);
+    }
+  };
+
   // -------------------------------------------------------------------------
   // Handlers
   // -------------------------------------------------------------------------
@@ -456,35 +504,42 @@ export default function Home() {
 
           {/* Right Actions Section */}
           <div className="flex items-center gap-3">
-            {/* Wallet Address Pill */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full neu-inset-sm">
-              <WalletIcon className="w-4 h-4 text-blue-600" />
-              <span className="font-mono-code text-xs text-slate-700 font-semibold">
-                {ownerAddress.substring(0, 6)}...{ownerAddress.substring(ownerAddress.length - 4)}
-              </span>
-              <button
-                className="flex items-center justify-center p-1 rounded-full text-slate-400 hover:text-blue-600 transition-colors cursor-pointer"
-                onClick={() => copyToClipboard(ownerAddress)}
-                title="Copy address"
-              >
-                <CopyIcon className="w-3.5 h-3.5 text-slate-400" />
-              </button>
+            {/* Owner Mode Status Badge (Activated when connected as owner) */}
+            {isOwner && (
+              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full neu-raised-xs border border-emerald-500/40 text-emerald-600 font-mono-code text-[11px] font-bold shadow-[0_0_12px_rgba(16,185,129,0.25)]">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>OWNER MODE ACTIVE</span>
+              </div>
+            )}
+
+            {/* RainbowKit Real Web3 Wallet Connect Button */}
+            <div className="flex items-center neu-raised-xs rounded-2xl p-1 bg-[#e8ecf2]">
+              <ConnectButton
+                showBalance={false}
+                accountStatus={{
+                  smallScreen: "avatar",
+                  largeScreen: "full",
+                }}
+                chainStatus={{
+                  smallScreen: "icon",
+                  largeScreen: "icon",
+                }}
+              />
             </div>
 
             {/* Emergency Withdraw Button */}
             <button
-              className="px-3.5 py-1.5 rounded-full neu-btn-danger text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
-              onClick={() =>
-                alert(
-                  `Owner withdrawal authorized. Contract holding: ${vaultBalanceEth} ETH (~${ethToUsd(
-                    vaultBalanceEth,
-                    ethPriceUsd
-                  )}).`
-                )
-              }
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                isOwner
+                  ? "neu-btn-danger text-red-600 ring-2 ring-red-400"
+                  : "neu-btn-danger text-red-600 opacity-90"
+              }`}
+              onClick={handleEmergencyWithdraw}
+              disabled={isWithdrawPending}
+              title={isOwner ? "Authorized: Withdraw all vault funds" : "Restricted to Vault Owner"}
             >
               <WarningIcon className="w-4 h-4 text-red-600" />
-              <span>Emergency Withdraw</span>
+              <span>{isWithdrawPending ? "Withdrawing..." : "Emergency Withdraw"}</span>
             </button>
 
             {/* User Profile Avatar Pill */}
@@ -645,6 +700,9 @@ export default function Home() {
               totalSpentEth={totalSpentEth}
               ethPriceUsd={ethPriceUsd}
               onUpdateLimit={(newLimit) => setSpendLimitEth(newLimit)}
+              isOwner={isOwner}
+              connectedAddress={connectedAddress}
+              isConnected={isConnected}
             />
           )}
 

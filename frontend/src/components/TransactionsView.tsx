@@ -95,7 +95,7 @@ export default function TransactionsView({ ethPriceUsd }: TransactionsViewProps)
     },
   ];
 
-  const filteredTransactions = transactions.filter((tx) => {
+  const filtered = transactions.filter((tx) => {
     const matchesStatus = filterStatus === "ALL" || tx.status === filterStatus;
     const matchesSearch =
       tx.invoiceId.toLowerCase().includes(searchTerm.toLowerCase()) ||
