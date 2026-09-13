@@ -1,88 +1,143 @@
-# Agent SafePay — Brand Logos & Assets
+# Agent SafePay — Brand Logos & Vector Assets Registry
 
-This file contains all project logos and assets for **Agent SafePay (W3A-1)**, with their exact alt text, local paths, and component usage.
+This document catalogues the complete brand identity and vector iconography system for **Agent SafePay (W3A-1)**. 
 
----
-
-## 1. Logo Showcase
-
-| Asset Preview | File Name | Local Path | Exact Alt Text | Dimensions |
-| :---: | :--- | :--- | :--- | :---: |
-| <img alt="Agent SafePay Vault Logo" src="./frontend/public/logo.png" width="80" height="80" /> | **Primary Logo (PNG)** | `frontend/public/logo.png` | `Agent SafePay Vault Logo` | 128 × 128 |
-| <img alt="Agent SafePay Vault Logo" src="./frontend/public/logo/agent-safepay-logo.png" width="80" height="80" /> | **Vault Shield (PNG)** | `frontend/public/logo/agent-safepay-logo.png` | `Agent SafePay Vault Logo` | 128 × 128 |
-| <img alt="Agent SafePay Vault Logo" src="./frontend/public/logo/vault-logo.png" width="80" height="80" /> | **Vault Logo (PNG)** | `frontend/public/logo/vault-logo.png` | `Agent SafePay Vault Logo` | 128 × 128 |
-| <img alt="Agent SafePay Vault Logo" src="./frontend/public/logo.svg" width="80" height="80" /> | **Scalable Vector (SVG)** | `frontend/public/logo.svg` | `Agent SafePay Vault Logo` | Vector |
-| <img alt="Agent SafePay Vault Logo" src="./assets/logos/logo.png" width="80" height="80" /> | **Mirror Asset (PNG)** | `assets/logos/logo.png` | `Agent SafePay Vault Logo` | 128 × 128 |
+To eliminate repetitive visual identity, the system features **6 distinct architectural insignia**, each engineered as a zero-dependency **Scalable Vector Graphic (SVG)** alongside high-resolution PNG assets.
 
 ---
 
-## 2. HTML Embedding
+## 1. Multi-Variant Logo Showcase
 
-All image elements preserve the exact same `alt` name used throughout the project:
+Every logo variant represents a specific security or protocol pillar in the Agent SafePay stack. Both native **SVG** and **PNG** assets are provided:
 
-```html
-<!-- Primary Logo from Public Folder -->
-<img 
-  alt="Agent SafePay Vault Logo" 
-  class="h-7 w-auto object-contain" 
-  src="/logo.png" 
-/>
+| Identity Pillar | Variant Key | Vector File (SVG) | High-Res Raster (PNG) | Preview (Vector SVG) | Exact Alt Text | Purpose & Architecture |
+| :--- | :--- | :--- | :--- | :---: | :--- | :--- |
+| **Vault Shield** | `shield` | [`/logo/agent-safepay-shield.svg`](./frontend/public/logo/agent-safepay-shield.svg) | [`/logo/agent-safepay-shield.png`](./frontend/public/logo/agent-safepay-shield.png) | <img alt="Agent SafePay Vault Logo" src="./frontend/public/logo/agent-safepay-shield.svg" width="64" height="64" /> | `Agent SafePay Vault Logo` | **Primary Brand Identity**: Tactile vault contour, cyan keyhole core, and emerald invariant confirmation arc. |
+| **AI Agent Key** | `agent-key` | [`/logo/ai-agent-key.svg`](./frontend/public/logo/ai-agent-key.svg) | [`/logo/ai-agent-key.png`](./frontend/public/logo/ai-agent-key.png) | <img alt="Agent SafePay Vault Logo" src="./frontend/public/logo/ai-agent-key.svg" width="64" height="64" /> | `Agent SafePay Vault Logo` | **Autonomous Agent Signer**: Restricted AI keyhead with neural lattice, dual-signer amber brackets, and cryptographic teeth. |
+| **EVM Contract Guard** | `evm-guard` | [`/logo/evm-contract-guard.svg`](./frontend/public/logo/evm-contract-guard.svg) | [`/logo/evm-contract-guard.png`](./frontend/public/logo/evm-contract-guard.png) | <img alt="Agent SafePay Vault Logo" src="./frontend/public/logo/evm-contract-guard.svg" width="64" height="64" /> | `Agent SafePay Vault Logo` | **Smart Contract Bytecode**: Faceted Ethereum diamond geometry encased in four invariant steel vault brackets. |
+| **HTTP-402 Stream** | `http402` | [`/logo/http402-payment-stream.svg`](./frontend/public/logo/http402-payment-stream.svg) | [`/logo/http402-payment-stream.png`](./frontend/public/logo/http402-payment-stream.png) | <img alt="Agent SafePay Vault Logo" src="./frontend/public/logo/http402-payment-stream.svg" width="64" height="64" /> | `Agent SafePay Vault Logo` | **Autonomous Streaming Payments**: Electric cyan lightning bolt with orbiting data packet capsules and `402-LIVE` badge. |
+| **Telemetry Node** | `telemetry` | [`/logo/telemetry-node.svg`](./frontend/public/logo/telemetry-node.svg) | [`/logo/telemetry-node.png`](./frontend/public/logo/telemetry-node.png) | <img alt="Agent SafePay Vault Logo" src="./frontend/public/logo/telemetry-node.svg" width="64" height="64" /> | `Agent SafePay Vault Logo` | **Sentinel Attestation Radar**: Concentric sweep rings, Merkle state bus lines, and active pulse beacon. |
+| **Brand Minimal** | `minimal` | [`/logo/brand-minimal.svg`](./frontend/public/logo/brand-minimal.svg) | [`/logo/brand-minimal.png`](./frontend/public/logo/brand-minimal.png) | <img alt="Agent SafePay Vault Logo" src="./frontend/public/logo/brand-minimal.svg" width="64" height="64" /> | `Agent SafePay Vault Logo` | **Compact Monogram Mark**: Interlocking 'A' & 'S' bold shield silhouette optimized for favicons and small chips. |
 
-<!-- From the dedicated /logo folder -->
-<img 
-  alt="Agent SafePay Vault Logo" 
-  class="h-7 w-auto object-contain" 
-  src="/logo/logo.png" 
-/>
+---
 
-<!-- Vector SVG format -->
-<img 
-  alt="Agent SafePay Vault Logo" 
-  class="h-7 w-auto object-contain" 
-  src="/logo.svg" 
-/>
+## 2. Directory Layout of Logo Assets
+
+All assets are mirrored in both public web folders and root asset repositories:
+
+```text
+hackathon-nsut/
+├── assets/
+│   └── logos/
+│       ├── agent-safepay-shield.svg   <-- Primary Vector
+│       ├── agent-safepay-shield.png   <-- High-Res 128x128 Raster
+│       ├── ai-agent-key.svg           <-- Agent Signer Vector
+│       ├── ai-agent-key.png
+│       ├── evm-contract-guard.svg     <-- Invariant Guard Vector
+│       ├── evm-contract-guard.png
+│       ├── http402-payment-stream.svg <-- Streaming Payment Vector
+│       ├── http402-payment-stream.png
+│       ├── telemetry-node.svg         <-- Diagnostic Radar Vector
+│       ├── telemetry-node.png
+│       ├── brand-minimal.svg          <-- Minimal Monogram Vector
+│       └── brand-minimal.png
+└── frontend/public/
+    ├── logo.svg                       <-- Default root vector
+    ├── logo.png                       <-- Default root raster
+    └── logo/                          <-- Full suite of 6 SVGs & PNGs
 ```
 
 ---
 
-## 3. React / Next.js Component Usage
+## 3. Why SVG Files are Superior to Font Ligatures & PNGs
 
-Import the pre-wired logo component directly from `@/components/Logo`:
+1. **Resolution Independence:** SVGs render with mathematical precision on standard displays, 4K monitors, and Retina screens without pixelation.
+2. **Zero Network Latency & Offline Pitch Safety:** Using inline SVG components eliminates external HTTP requests (e.g. Google Fonts CDN). If hackathon Wi-Fi disconnects, all logos and icons remain 100% visible.
+3. **CSS Class Interoperability:** Inline SVGs inherit Tailwind utility classes (`className="w-8 h-8 text-blue-600"`), making them responsive to hover states, dark mode, and dynamic theme colors.
+
+---
+
+## 4. React / Next.js Component Usage
+
+Import the master `<Logo />` component directly from `@/components/Logo`:
 
 ```tsx
 import Logo from "@/components/Logo";
 
-export default function Header() {
-  return (
-    <div className="flex items-center gap-3">
-      {/* Renders <img alt="Agent SafePay Vault Logo" src="/logo.png" /> */}
-      <Logo className="h-7 w-auto object-contain" />
-      
-      {/* Or use the vector version */}
-      <Logo variant="vector" className="h-7 w-auto" />
-    </div>
-  );
-}
+// 1. Primary Vault Shield (Header & Brand Mark)
+<Logo variant="shield" className="w-8 h-8" />
+
+// 2. AI Agent Key (Role Separation & Restricted Signer)
+<Logo variant="agent-key" className="w-6 h-6" />
+
+// 3. EVM Contract Guard (Bytecode Specifications & Balance)
+<Logo variant="evm-guard" className="w-7 h-7" />
+
+// 4. HTTP-402 Streaming (Payment Protocols & Telemetry)
+<Logo variant="http402" className="w-6 h-6" />
+
+// 5. Telemetry Node (RPC Diagnostic Terminal)
+<Logo variant="telemetry" className="w-7 h-7" />
+
+// 6. Minimal Monogram (Table Badges & Compact Chips)
+<Logo variant="minimal" className="w-5 h-5" />
 ```
 
-Or import individual SVG icons from `@/components/Logos`:
+### Specifying Formats:
+The component supports inline SVGs as well as direct SVG or PNG URL formats:
 
 ```tsx
+// Pure inline SVG vector (Default - Zero network requests)
+<Logo variant="shield" format="inline-svg" className="w-8 h-8" />
+
+// Served via public SVG file URL (/logo/agent-safepay-shield.svg)
+<Logo variant="shield" format="svg-file" className="w-8 h-8" />
+
+// Served via public PNG file URL (/logo/agent-safepay-shield.png)
+<Logo variant="shield" format="png-file" className="w-8 h-8" />
+```
+
+### Individual Direct Component Imports:
+```tsx
 import { 
-  AgentSafePayLogo, 
-  EthereumLogo, 
-  VaultGuardLogo, 
-  Http402BadgeLogo, 
-  AgentNodeLogo 
-} from "@/components/Logos";
+  VaultShieldLogo, 
+  AiAgentKeyLogo, 
+  EvmContractGuardLogo, 
+  Http402StreamLogo, 
+  TelemetryNodeLogo, 
+  BrandMinimalLogo 
+} from "@/components/Logo";
+
+export function Header() {
+  return <VaultShieldLogo className="w-8 h-8" />;
+}
 ```
 
 ---
 
-## 4. Color Tokens & Brand Specification
+## 5. HTML / Markdown Embedding Examples
 
-* **Canvas Tone:** `#e8ecf2` / `#eef1f5` (Tactile Neumorphic)
-* **Primary Cobalt:** `#2563eb` (Action Blue)
-* **Electric Cyan:** `#38bdf8` / `#00F0FF` (Glow Accent)
-* **Emerald Green:** `#10b981` (On-Chain Settlement & Invariant Hold)
-* **Revert Crimson:** `#ef4444` / `#ba1a1a` (`BUDGET_EXCEEDED` Circuit Breaker)
+All images maintain the exact required `alt="Agent SafePay Vault Logo"`:
+
+```html
+<!-- Primary Vector SVG -->
+<img 
+  alt="Agent SafePay Vault Logo" 
+  class="h-8 w-auto" 
+  src="/logo/agent-safepay-shield.svg" 
+/>
+
+<!-- AI Agent Key Vector SVG -->
+<img 
+  alt="Agent SafePay Vault Logo" 
+  class="h-8 w-auto" 
+  src="/logo/ai-agent-key.svg" 
+/>
+
+<!-- EVM Contract Guard Vector SVG -->
+<img 
+  alt="Agent SafePay Vault Logo" 
+  class="h-8 w-auto" 
+  src="/logo/evm-contract-guard.svg" 
+/>
+```

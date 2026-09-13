@@ -1,0 +1,58 @@
+<svg viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="streamGrad" x1="30" y1="20" x2="98" y2="108" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00f0ff" />
+      <stop offset="0.5" stop-color="#2563eb" />
+      <stop offset="1" stop-color="#10b981" />
+    </linearGradient>
+    <linearGradient id="boltGrad" x1="70" y1="24" x2="48" y2="104" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#38bdf8" />
+      <stop offset="0.4" stop-color="#60a5fa" />
+      <stop offset="1" stop-color="#10b981" />
+    </linearGradient>
+    <radialGradient id="burst" cx="64" cy="64" r="36" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#38bdf8" stop-opacity="0.3" />
+      <stop offset="1" stop-color="#38bdf8" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- Squircle Base with tactile bezel -->
+  <rect x="6" y="6" width="116" height="116" rx="28" fill="#e8ecf2" />
+  <rect x="7" y="7" width="114" height="114" rx="27" stroke="#ffffff" stroke-width="2" stroke-opacity="0.8" />
+  <rect x="8" y="8" width="112" height="112" rx="26" stroke="#c8d3e0" stroke-width="1.5" />
+
+  <!-- Radial Stream Pulse -->
+  <circle cx="64" cy="64" r="36" fill="url(#burst)" />
+
+  <!-- Orbiting Data Stream Flow Tracks -->
+  <path d="M26 64C26 43 43 26 64 26C78 26 90 33 97 44" stroke="#7dd3fc" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 4" />
+  <path d="M102 64C102 85 85 102 64 102C50 102 38 95 31 84" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 4" />
+
+  <!-- Dynamic Data Packet Beads -->
+  <circle cx="97" cy="44" r="4" fill="#00f0ff" />
+  <circle cx="31" cy="84" r="4" fill="#10b981" />
+  <circle cx="26" cy="64" r="3" fill="#38bdf8" />
+  <circle cx="102" cy="64" r="3" fill="#10b981" />
+
+  <!-- Central Electric Lightning Strike (HTTP 402 Instant Settlement) -->
+  <path
+    d="M72 20L42 62H66L56 108L90 56H66L72 20Z"
+    fill="url(#boltGrad)"
+    stroke="#ffffff"
+    stroke-width="1.5"
+    stroke-linejoin="round"
+  />
+
+  <!-- Inner High-Velocity Core -->
+  <path
+    d="M68 30L48 62H66L58 96L82 56H64L68 30Z"
+    fill="#ffffff"
+    opacity="0.6"
+  />
+
+  <!-- 402 Protocol Badge Chip -->
+  <rect x="44" y="104" width="40" height="14" rx="7" fill="#0f172a" stroke="#38bdf8" stroke-width="1" />
+  <text x="64" y="114" fill="#38bdf8" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle" letter-spacing="1">
+    402-LIVE
+  </text>
+</svg>

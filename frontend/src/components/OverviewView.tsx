@@ -2,6 +2,7 @@
 
 import React, { RefObject } from "react";
 import { ethToUsd } from "@/lib/formatters";
+import Logo from "@/components/Logo";
 import {
   BankIcon,
   SpeedIcon,
@@ -141,9 +142,9 @@ export default function OverviewView({
         <div className="neu-raised rounded-3xl p-6 flex flex-col justify-between group transition-all">
           <div>
             <div className="flex items-center justify-between gap-2 mb-4">
-              <div className="flex items-center gap-2 text-blue-600">
-                <div className="w-9 h-9 rounded-xl neu-raised-xs flex items-center justify-center text-blue-600">
-                  <BankIcon className="w-5 h-5 text-blue-600" />
+              <div className="flex items-center gap-2.5 text-blue-600">
+                <div className="w-10 h-10 rounded-2xl neu-raised-xs flex items-center justify-center p-1.5 bg-[#e8ecf2]">
+                  <Logo variant="evm-guard" className="w-7 h-7" />
                 </div>
                 <span className="font-bold text-slate-800 text-base tracking-tight">
                   Total Vault Balance
@@ -256,9 +257,9 @@ export default function OverviewView({
         <div className="neu-raised rounded-3xl p-6 flex flex-col justify-between group transition-all">
           <div>
             <div className="flex items-center justify-between gap-2 mb-3">
-              <div className="flex items-center gap-2 text-slate-800">
-                <div className="w-9 h-9 rounded-xl neu-raised-xs flex items-center justify-center text-blue-600">
-                  <KeyIcon className="w-5 h-5 text-blue-600" />
+              <div className="flex items-center gap-2.5 text-slate-800">
+                <div className="w-10 h-10 rounded-2xl neu-raised-xs flex items-center justify-center p-1.5 bg-[#e8ecf2]">
+                  <Logo variant="agent-key" className="w-7 h-7" />
                 </div>
                 <span className="font-bold text-slate-800 text-base tracking-tight">
                   Agent Authority Key
@@ -312,9 +313,12 @@ export default function OverviewView({
                 <span className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]"></span>
                 <span className="w-2.5 h-2.5 rounded-full bg-[#27c93f]"></span>
               </div>
-              <span className="font-bold text-slate-800 text-sm tracking-tight ml-2">
-                x402 Protocol Inspector
-              </span>
+              <div className="flex items-center gap-2 ml-2">
+                <Logo variant="http402" className="w-5 h-5" />
+                <span className="font-bold text-slate-800 text-sm tracking-tight">
+                  x402 Protocol Inspector
+                </span>
+              </div>
             </div>
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full neu-raised-xs font-mono-code text-[11px] text-emerald-600 font-bold">
               <span className="relative flex h-2 w-2">
@@ -381,6 +385,7 @@ export default function OverviewView({
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div>
               <div className="flex items-center gap-2">
+                <Logo variant="minimal" className="w-5 h-5" />
                 <span className="font-bold text-slate-800 text-base tracking-tight">
                   Proof-of-Delivery Audit Ledger
                 </span>

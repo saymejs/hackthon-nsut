@@ -13,6 +13,7 @@ import ContractGuardView from "@/components/ContractGuardView";
 import TransactionsView from "@/components/TransactionsView";
 import PoliciesView from "@/components/PoliciesView";
 import NodeLogsView from "@/components/NodeLogsView";
+import Logo from "@/components/Logo";
 import {
   DashboardIcon,
   ShieldIcon,
@@ -400,10 +401,9 @@ export default function Home() {
           {/* Logo & Subtitle Section */}
           <div className="flex items-center gap-3">
             <div className="neu-raised-xs w-11 h-11 rounded-2xl flex items-center justify-center p-1.5 bg-[#e8ecf2]">
-              <img
-                alt="Agent SafePay Vault Logo"
-                className="h-7 w-auto object-contain"
-                src="/logo.png"
+              <Logo
+                variant="shield"
+                className="w-8 h-8 object-contain"
               />
             </div>
             <div className="flex flex-col">

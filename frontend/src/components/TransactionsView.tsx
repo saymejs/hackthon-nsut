@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { ethToUsd } from "@/lib/formatters";
 import { ReceiptIcon, DownloadIcon, SearchIcon, CopyIcon } from "@/components/Icons";
+import Logo from "@/components/Logo";
 
 interface Transaction {
   id: string;
@@ -45,33 +46,33 @@ export default function TransactionsView({ ethPriceUsd }: TransactionsViewProps)
       timestamp: "1m ago",
       invoiceId: "inv_98a6",
       service: "POST /api/v1/service/translate",
-      provider: "0x14dC...e92B",
+      provider: "0x3421...c981",
       amountEth: "0.0008 ETH",
       amountUsd: "~$2.00",
-      txHash: "0x7890abcdef1234567890abcdef1234567890abcdef1234567890abcdef123456",
-      contentHash: "0x3f1e82001188ad992817ccbcde91238947218390192847192837192837192837",
+      txHash: "0x7890abcdef123456789abcdef0123456789abcdef0123456789abcdef0123456",
+      contentHash: "0x3f1e82710de850682255cfc9b0e127608eb3fe05a5a1f0a5ee3bc3f136e09ce3",
       status: "SETTLED",
-      gasUsed: "46,120",
+      gasUsed: "41,102",
     },
     {
       id: "tx-102",
       timestamp: "3m ago",
       invoiceId: "inv_98a5",
       service: "POST /api/v1/service/ocr-extract",
-      provider: "0x45B2...c071",
+      provider: "0x8920...a4f2",
       amountEth: "0.0012 ETH",
       amountUsd: "~$3.00",
       txHash: "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-      contentHash: "0x9c4471fa28e51082736192837192837192837192837192837192837192837192",
+      contentHash: "0x9c4471010de850682255cfc9b0e127608eb3fe05a5a1f0a5ee3bc3f136e09ce3",
       status: "SETTLED",
-      gasUsed: "51,008",
+      gasUsed: "43,890",
     },
     {
       id: "tx-101",
       timestamp: "4m ago",
       invoiceId: "inv_exploit_01",
       service: "POST /api/v1/service/heavy-batch",
-      provider: "0x8920...a4f2",
+      provider: "0xBadActor...6666",
       amountEth: "0.1000 ETH",
       amountUsd: "~$250.00",
       txHash: "0x9999888877776666555544443333222211110000aaaabbbbccccddddeeeeffff",
@@ -88,13 +89,13 @@ export default function TransactionsView({ ethPriceUsd }: TransactionsViewProps)
       amountEth: "0.0005 ETH",
       amountUsd: "~$1.25",
       txHash: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
-      contentHash: "0x12bb5920390fc182938471928371928371928371928371928371928371928371",
+      contentHash: "0x12bb59010de850682255cfc9b0e127608eb3fe05a5a1f0a5ee3bc3f136e09ce3",
       status: "SETTLED",
-      gasUsed: "44,891",
+      gasUsed: "37,420",
     },
   ];
 
-  const filtered = transactions.filter((tx) => {
+  const filteredTransactions = transactions.filter((tx) => {
     const matchesStatus = filterStatus === "ALL" || tx.status === filterStatus;
     const matchesSearch =
       tx.invoiceId.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -123,8 +124,8 @@ export default function TransactionsView({ ethPriceUsd }: TransactionsViewProps)
       <div className="w-full flex flex-wrap items-center justify-between gap-4 px-6 py-4 rounded-3xl neu-raised text-slate-800">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl neu-raised-xs flex items-center justify-center text-blue-600">
-              <ReceiptIcon className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 rounded-2xl neu-raised-xs flex items-center justify-center p-1.5 bg-[#e8ecf2]">
+              <Logo variant="minimal" className="w-7 h-7" />
             </div>
             <h2 className="font-bold text-lg text-slate-900 tracking-tight">
               Agent On-Chain Transaction Ledger

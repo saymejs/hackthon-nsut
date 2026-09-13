@@ -47,14 +47,18 @@ We replaced every single font ligature across all Command Bays, navigation butto
 
 ---
 
-## 4. Logo & Icon Registry
+## 4. Multi-Variant Logo Registry (6 Distinct Architectural Insignia)
 
-### Brand Logo Assets
-| Asset Preview | File Path | Exact Alt Text | Purpose |
-| :---: | :--- | :--- | :--- |
-| <img alt="Agent SafePay Vault Logo" src="./frontend/public/logo.png" width="64" height="64" /> | `frontend/public/logo.png` | `Agent SafePay Vault Logo` | Primary Brand Mark (Neumorphic Glow) |
-| <img alt="Agent SafePay Vault Logo" src="./frontend/public/logo/agent-safepay-logo.png" width="64" height="64" /> | `frontend/public/logo/agent-safepay-logo.png` | `Agent SafePay Vault Logo` | High-DPI Vault Shield |
-| <img alt="Agent SafePay Vault Logo" src="./frontend/public/logo.svg" width="64" height="64" /> | `frontend/public/logo.svg` | `Agent SafePay Vault Logo` | Vector Brand Asset |
+To avoid visual monotony, the platform features **6 distinct, purpose-crafted SVG logos** representing each core security and protocol layer:
+
+| Variant | Identity Pillar | Vector (SVG) | Raster (PNG) | Preview (Vector SVG) | Exact Alt Text | Purpose |
+| :--- | :--- | :--- | :--- | :---: | :--- | :--- |
+| `shield` | **Vault Shield** | `frontend/public/logo/agent-safepay-shield.svg` | `frontend/public/logo/agent-safepay-shield.png` | <img alt="Agent SafePay Vault Logo" src="./frontend/public/logo/agent-safepay-shield.svg" width="56" height="56" /> | `Agent SafePay Vault Logo` | App Header & Security Policy emblem |
+| `agent-key` | **AI Agent Key** | `frontend/public/logo/ai-agent-key.svg` | `frontend/public/logo/ai-agent-key.png` | <img alt="Agent SafePay Vault Logo" src="./frontend/public/logo/ai-agent-key.svg" width="56" height="56" /> | `Agent SafePay Vault Logo` | Restricted signer key & dual-auth matrix |
+| `evm-guard` | **Contract Guard** | `frontend/public/logo/evm-contract-guard.svg` | `frontend/public/logo/evm-contract-guard.png` | <img alt="Agent SafePay Vault Logo" src="./frontend/public/logo/evm-contract-guard.svg" width="56" height="56" /> | `Agent SafePay Vault Logo` | Solidity EVM consensus & bytecode specs |
+| `http402` | **HTTP-402 Stream** | `frontend/public/logo/http402-payment-stream.svg` | `frontend/public/logo/http402-payment-stream.png` | <img alt="Agent SafePay Vault Logo" src="./frontend/public/logo/http402-payment-stream.svg" width="56" height="56" /> | `Agent SafePay Vault Logo` | Machine-to-machine streaming payments |
+| `telemetry` | **Telemetry Node** | `frontend/public/logo/telemetry-node.svg` | `frontend/public/logo/telemetry-node.png` | <img alt="Agent SafePay Vault Logo" src="./frontend/public/logo/telemetry-node.svg" width="56" height="56" /> | `Agent SafePay Vault Logo` | Node diagnostics, RPC stream & radar |
+| `minimal` | **Brand Minimal** | `frontend/public/logo/brand-minimal.svg` | `frontend/public/logo/brand-minimal.png` | <img alt="Agent SafePay Vault Logo" src="./frontend/public/logo/brand-minimal.svg" width="56" height="56" /> | `Agent SafePay Vault Logo` | Compact ledger badges & favicons |
 
 ---
 

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { TerminalIcon, TrendingUpIcon, CopyIcon, CheckCircleIcon, TrashIcon } from "@/components/Icons";
+import Logo from "@/components/Logo";
 
 interface LogEntry {
   id: string;
@@ -43,19 +44,19 @@ export default function NodeLogsView() {
       id: "5",
       time: "00:14:03.118",
       category: "RPC",
-      message: "eth_sendRawTransaction(AgentVault.payService(inv_98a7, 0x8920...a4f2, 1000000000000000, 0xa6c9b...)) -> TxHash: 0x4a5b6c7d...0123",
+      message: "eth_sendRawTransaction(AgentVault.payService) -> Hash: 0x4a5b6c...ef0123 [PENDING]",
     },
     {
       id: "6",
-      time: "00:14:04.290",
+      time: "00:14:04.220",
       category: "RPC",
-      message: "eth_getTransactionReceipt(0x4a5b6c7d...0123) -> Status: 1 (SUCCESS) | Block: #6194820 | Gas Used: 48,219",
+      message: "eth_getTransactionReceipt(0x4a5b6c...ef0123) -> Block #6194820 | Gas: 42,614 | Status: 1 (SUCCESS)",
     },
     {
       id: "7",
-      time: "00:14:05.011",
+      time: "00:14:05.101",
       category: "HTTP-402",
-      message: "DELIVERY CONFIRMED -> Content-Hash: 0xa6c9b7410de850682255cfc9b0e127608eb3fe05a5a1f0a5ee3bc3f136e09ce3 (200 OK)",
+      message: "REQUEST RETRIED with X-Payment-TxHash: 0x4a5b6c...ef0123 -> Hash verified on-chain -> 200 OK (Content Dispatched)",
     },
     {
       id: "8",
@@ -111,8 +112,8 @@ export default function NodeLogsView() {
       <div className="w-full flex flex-wrap items-center justify-between gap-4 px-6 py-4 rounded-3xl neu-raised text-slate-800">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl neu-raised-xs flex items-center justify-center text-blue-600">
-              <TerminalIcon className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 rounded-2xl neu-raised-xs flex items-center justify-center p-1.5 bg-[#e8ecf2]">
+              <Logo variant="telemetry" className="w-7 h-7" />
             </div>
             <h2 className="font-bold text-lg text-slate-900 tracking-tight">
               EVM RPC &amp; Node Diagnostic Logs

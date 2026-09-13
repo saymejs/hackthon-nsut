@@ -1,0 +1,53 @@
+<svg viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="keyGrad" x1="20" y1="20" x2="108" y2="108" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3b82f6" />
+      <stop offset="0.6" stop-color="#1d4ed8" />
+      <stop offset="1" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="amberLock" x1="40" y1="20" x2="88" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f59e0b" />
+      <stop offset="1" stop-color="#d97706" />
+    </linearGradient>
+    <radialGradient id="keyGlow" cx="64" cy="44" r="28" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#38bdf8" stop-opacity="0.9" />
+      <stop offset="0.7" stop-color="#0284c7" stop-opacity="0.4" />
+      <stop offset="1" stop-color="#0f172a" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- Squircle Base with tactile bezel -->
+  <rect x="6" y="6" width="116" height="116" rx="28" fill="#e8ecf2" />
+  <rect x="7" y="7" width="114" height="114" rx="27" stroke="#ffffff" stroke-width="2" stroke-opacity="0.8" />
+  <rect x="8" y="8" width="112" height="112" rx="26" stroke="#c8d3e0" stroke-width="1.5" />
+
+  <!-- Circular Outer Restrictive Chamber -->
+  <circle cx="64" cy="44" r="28" fill="url(#keyGrad)" stroke="#38bdf8" stroke-width="2" />
+  <circle cx="64" cy="44" r="22" fill="#0b1329" stroke="#1e293b" stroke-width="1.5" />
+
+  <!-- AI Neural Circuit Lattice inside Key Head -->
+  <circle cx="64" cy="44" r="9" fill="url(#keyGlow)" />
+  <circle cx="64" cy="44" r="5" fill="#ffffff" />
+  <path d="M64 26V35" stroke="#7dd3fc" stroke-width="2" stroke-linecap="round" />
+  <path d="M48 38L56 42" stroke="#7dd3fc" stroke-width="2" stroke-linecap="round" />
+  <path d="M80 38L72 42" stroke="#7dd3fc" stroke-width="2" stroke-linecap="round" />
+  <circle cx="48" cy="38" r="2.5" fill="#38bdf8" />
+  <circle cx="80" cy="38" r="2.5" fill="#38bdf8" />
+  <circle cx="64" cy="26" r="2.5" fill="#38bdf8" />
+
+  <!-- Dual-Signer Restriction Brackets (Amber Guard) -->
+  <path d="M38 34C34 40 34 48 38 54" stroke="url(#amberLock)" stroke-width="3" stroke-linecap="round" />
+  <path d="M90 34C94 40 94 48 90 54" stroke="url(#amberLock)" stroke-width="3" stroke-linecap="round" />
+
+  <!-- Cryptographic Key Shaft -->
+  <path d="M60 70H68V104L64 108L60 104V70Z" fill="url(#keyGrad)" stroke="#38bdf8" stroke-width="1.5" />
+  <path d="M64 70V104" stroke="#7dd3fc" stroke-width="2" stroke-linecap="round" />
+
+  <!-- Key Bitting / Cryptographic Teeth -->
+  <path d="M68 80H78V86H68" fill="#1d4ed8" stroke="#38bdf8" stroke-width="1.5" stroke-linejoin="round" />
+  <path d="M68 92H75V98H68" fill="#1d4ed8" stroke="#38bdf8" stroke-width="1.5" stroke-linejoin="round" />
+  <path d="M60 86H53V92H60" fill="#1d4ed8" stroke="#38bdf8" stroke-width="1.5" stroke-linejoin="round" />
+
+  <!-- Hard Revert Indicator Node -->
+  <circle cx="64" cy="108" r="3" fill="#10b981" />
+</svg>

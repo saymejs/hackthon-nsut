@@ -1,0 +1,49 @@
+<svg viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="radarSweep" x1="64" y1="64" x2="104" y2="34" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#10b981" stop-opacity="0.6" />
+      <stop offset="0.5" stop-color="#0284c7" stop-opacity="0.2" />
+      <stop offset="1" stop-color="#0284c7" stop-opacity="0" />
+    </linearGradient>
+    <radialGradient id="beaconGlow" cx="64" cy="64" r="16" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#10b981" />
+      <stop offset="0.7" stop-color="#059669" />
+      <stop offset="1" stop-color="#064e3b" />
+    </radialGradient>
+  </defs>
+
+  <!-- Squircle Base with tactile bezel -->
+  <rect x="6" y="6" width="116" height="116" rx="28" fill="#e8ecf2" />
+  <rect x="7" y="7" width="114" height="114" rx="27" stroke="#ffffff" stroke-width="2" stroke-opacity="0.8" />
+  <rect x="8" y="8" width="112" height="112" rx="26" stroke="#c8d3e0" stroke-width="1.5" />
+
+  <!-- Radar Grid Background -->
+  <circle cx="64" cy="64" r="44" fill="#0b1329" stroke="#1e293b" stroke-width="1.5" />
+  <circle cx="64" cy="64" r="32" stroke="#1e293b" stroke-width="1" stroke-dasharray="2 2" />
+  <circle cx="64" cy="64" r="20" stroke="#1e293b" stroke-width="1" />
+
+  <!-- Radar Crosshairs -->
+  <path d="M20 64H108" stroke="#1e293b" stroke-width="1" />
+  <path d="M64 20V108" stroke="#1e293b" stroke-width="1" />
+
+  <!-- Rotating Sweep Wedge -->
+  <path d="M64 64L104 34A44 44 0 0 0 64 20Z" fill="url(#radarSweep)" />
+  <path d="M64 64L104 34" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" />
+
+  <!-- Attestation Nodes on Radar Ring -->
+  <circle cx="92" cy="48" r="4" fill="#38bdf8" stroke="#ffffff" stroke-width="1" />
+  <circle cx="40" cy="80" r="3" fill="#10b981" />
+  <circle cx="78" cy="88" r="3.5" fill="#f59e0b" />
+  <circle cx="48" cy="42" r="2.5" fill="#38bdf8" />
+
+  <!-- Telemetry Interconnect Lines -->
+  <path d="M64 64L92 48" stroke="#38bdf8" stroke-width="1" stroke-linecap="round" stroke-dasharray="2 2" />
+  <path d="M64 64L40 80" stroke="#10b981" stroke-width="1" stroke-linecap="round" />
+
+  <!-- Center Attestation Beacon Core -->
+  <circle cx="64" cy="64" r="10" fill="url(#beaconGlow)" stroke="#ffffff" stroke-width="1.5" />
+  <circle cx="64" cy="64" r="4" fill="#ffffff" />
+
+  <!-- Sentinel Ring Wave -->
+  <circle cx="64" cy="64" r="15" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="6 3" />
+</svg>

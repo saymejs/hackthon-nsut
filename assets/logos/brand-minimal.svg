@@ -1,0 +1,38 @@
+<svg viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="minGrad" x1="16" y1="16" x2="112" y2="112" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2563eb" />
+      <stop offset="1" stop-color="#0284c7" />
+    </linearGradient>
+  </defs>
+
+  <!-- Squircle Base with tactile bezel -->
+  <rect x="6" y="6" width="116" height="116" rx="28" fill="#e8ecf2" />
+  <rect x="7" y="7" width="114" height="114" rx="27" stroke="#ffffff" stroke-width="2" stroke-opacity="0.8" />
+  <rect x="8" y="8" width="112" height="112" rx="26" stroke="#c8d3e0" stroke-width="1.5" />
+
+  <!-- Minimal Bold Shield Silhouette -->
+  <path
+    d="M64 24L94 36V62C94 82 81 98 64 104C47 98 34 82 34 62V36L64 24Z"
+    fill="url(#minGrad)"
+  />
+
+  <!-- Cutout Interlocking 'A' & 'S' Monogram Geometry -->
+  <!-- Upper 'A' Apex -->
+  <path
+    d="M64 36L78 62H70L64 50L58 62H50L64 36Z"
+    fill="#ffffff"
+  />
+
+  <!-- Lower 'S' Curve Bar -->
+  <path
+    d="M50 72C50 68.7 52.7 66 56 66H72C75.3 66 78 68.7 78 72C78 75.3 75.3 78 72 78H56C52.7 78 50 80.7 50 84C50 87.3 52.7 90 56 90H72C75.3 90 78 87.3 78 84"
+    stroke="#ffffff"
+    stroke-width="5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <!-- Emerald Security Dot -->
+  <circle cx="64" cy="98" r="3.5" fill="#10b981" />
+</svg>

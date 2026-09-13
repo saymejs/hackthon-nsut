@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { ethToUsd, formatEthAndUsd } from "@/lib/formatters";
 import { ShieldIcon, SlidersIcon, CheckCircleIcon, CodeIcon } from "@/components/Icons";
+import Logo from "@/components/Logo";
 
 interface ContractGuardProps {
   vaultAddress: string;
@@ -46,8 +47,8 @@ export default function ContractGuardView({
       <div className="w-full flex flex-wrap items-center justify-between gap-4 px-6 py-4 rounded-3xl neu-raised text-slate-800">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl neu-raised-xs flex items-center justify-center text-blue-600">
-              <ShieldIcon className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 rounded-2xl neu-raised-xs flex items-center justify-center p-1.5 bg-[#e8ecf2]">
+              <Logo variant="evm-guard" className="w-7 h-7" />
             </div>
             <h2 className="font-bold text-lg text-slate-900 tracking-tight">
               EVM Smart Contract Guard Specifications
@@ -113,8 +114,11 @@ export default function ContractGuardView({
                 <div className="text-[10px] text-emerald-600 mt-0.5">Permissions: setLimit(), setAgent(), withdraw()</div>
               </div>
               <div className="p-2.5 rounded-2xl neu-inset-sm">
-                <div className="text-[10px] uppercase text-slate-400 font-bold">AI Agent Key</div>
-                <div className="text-blue-600 font-semibold truncate">{agentAddress}</div>
+                <div className="text-[10px] uppercase text-slate-400 font-bold flex items-center gap-1.5">
+                  <Logo variant="agent-key" className="w-3.5 h-3.5" />
+                  <span>AI Agent Key</span>
+                </div>
+                <div className="text-blue-600 font-semibold truncate mt-0.5">{agentAddress}</div>
                 <div className="text-[10px] text-amber-600 mt-0.5">Permissions: payService() ONLY (Restricted)</div>
               </div>
             </div>

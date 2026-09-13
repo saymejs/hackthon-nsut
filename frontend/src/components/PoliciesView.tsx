@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { ethToUsd } from "@/lib/formatters";
+import Logo from "@/components/Logo";
 import {
   PolicyIcon,
   LockIcon,
@@ -28,8 +29,8 @@ export default function PoliciesView({ spendLimitEth, ethPriceUsd }: PoliciesVie
       <div className="w-full flex flex-wrap items-center justify-between gap-4 px-6 py-4 rounded-3xl neu-raised text-slate-800">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl neu-raised-xs flex items-center justify-center text-blue-600">
-              <PolicyIcon className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 rounded-2xl neu-raised-xs flex items-center justify-center p-1.5 bg-[#e8ecf2]">
+              <Logo variant="shield" className="w-7 h-7" />
             </div>
             <h2 className="font-bold text-lg text-slate-900 tracking-tight">
               Active Security Guard Policies
