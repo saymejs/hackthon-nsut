@@ -410,7 +410,45 @@ if __name__ == "__main__":
 
 ---
 
-## 6. End-to-End Running Checklist
+## 6. The "One-Click Demo" Architecture & Pitch Strategy
+
+### What is the "One-Click Demo"?
+In hackathons, judges give each team only **2 to 3 minutes total** for pitch, demo, and Q&A. Opening multiple terminals, typing long CLI flags, waiting for blockchain confirmations, or hoping external APIs don't fail under bad venue Wi-Fi is risky.
+
+To guarantee a **100% fail-safe presentation**, we built two **One-Click Demo Controls** directly into the frontend dashboard header (`http://localhost:3000`):
+
+1. **Button 1: "Trigger Standard Purchase (0.001 ETH / ~$2.50)"**
+   - *With 1 click:* Triggers the HTTP 402 challenge, executes the on-chain vault settlement, receives the compute deliverable with SHA-256 proof of delivery, and updates the live metrics and terminal logs.
+2. **Button 2: "Simulate Overspend Attack (Attempt 0.1 ETH / ~$250.00)"**
+   - *With 1 click:* Simulates a prompt-injected or runaway agent attempting to exceed the vault's remaining budget.
+   - The transaction hard-reverts on-chain (`BUDGET_EXCEEDED`).
+   - A prominent **red security banner** appears on the dashboard proving that **0 ETH ($0.00) was lost**.
+
+### How Dhruv's Live Agent Pairs With It:
+* **The "Live + Safe Net" Strategy:** During the live hackathon demo, you can have Dhruv run `python agent/ai_agent.py` in the terminal to demonstrate real Python/LLM execution.
+* If the venue Wi-Fi drops, RPC lags, or an LLM API key fails, you simply use the **One-Click Demo buttons on the frontend**. The judges will see the exact same flawless workflow and security invariant without any awkward pauses or crashes on stage.
+
+---
+
+## 7. Killer Hackathon Pitch Highlight: Wi-Fi Disconnect & Double-Charge Protection (Idempotency)
+
+### The Pitch Story for Judges:
+> *"Judges, imagine our autonomous AI agent is in the middle of paying for high-priority cloud compute, and the venue Wi-Fi or server connection drops right after the transaction is broadcast.*
+> 
+> *In a naive system, when the agent reconnects, it would issue a brand-new request and **get charged twice**.*
+> 
+> *To solve this, we built **Strict Idempotency & Double-Charge Protection**: our agent persists the unique `paymentId`. When it reconnects, it presents the exact same invoice identifier in the `X-Payment-Id` header. Our provider verifies the existing settlement and immediately hands back the cached deliverable with zero extra cost (`idempotencyHit: true`).*
+> 
+> *The agent gets its compute data, and the vault loses **$0.00 extra**."*
+
+### How This Is Implemented in Code:
+* **In `provider/main.py` (Lines 108–125):** If `x_payment_id` is already fulfilled, the provider returns the cached result with `"idempotencyHit": true` and the original `contentHash`.
+* **In `provider/test_provider.py` (Test #3):** Verified by automated integration test that asserts 0 extra Wei charged and exact matching SHA-256 digests.
+* **In `frontend/src/components/PoliciesView.tsx`:** Highlighted in the Command Bay as **"Strict Idempotency & Replay Guard: ACTIVE (Zero-Cost Cache)"**.
+
+---
+
+## 8. End-to-End Running Checklist
 
 To run the complete system locally for the hackathon demo:
 
@@ -447,3 +485,4 @@ To run the complete system locally for the hackathon demo:
    pip install -r requirements.txt
    python ai_agent.py
    ```
+
