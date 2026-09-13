@@ -36,6 +36,12 @@ export default function Home() {
   // Wagmi Web3 Wallet State & Owner Detection
   const { address: connectedAddress, isConnected } = useAccount();
 
+  // Mount state to guard client-side hydration on browser refresh
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Navigation State
   const [activeTab, setActiveTab] = useState<
     "overview" | "contract-guard" | "transactions" | "policies" | "node-logs"
@@ -214,12 +220,21 @@ export default function Home() {
     },
   ]);
 
-  const terminalEndRef = useRef<HTMLDivElement>(null);
+  const terminalContainerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll terminal
+  // Auto-scroll terminal inside its own container — NEVER scroll the main window / viewport
   useEffect(() => {
-    terminalEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (terminalContainerRef.current) {
+      terminalContainerRef.current.scrollTop = terminalContainerRef.current.scrollHeight;
+    }
   }, [logs]);
+
+  // Ensure fresh page load or browser refresh always starts at the top (scrollY = 0)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.scrollTo(0, 0);
+    }
+  }, []);
 
   // Check Neon Database Initialization & Fetch initial data
   useEffect(() => {
@@ -1053,7 +1068,7 @@ export default function Home() {
           {/* Right Actions Section */}
           <div className="flex items-center gap-2 shrink-0">
             {/* Owner Mode Status Badge */}
-            {isOwner && (
+            {mounted && isOwner && (
               <div className="hidden 2xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full neu-raised-xs border border-emerald-500/40 text-emerald-600 font-mono-code text-[10px] font-bold">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 <span>OWNER</span>
@@ -1061,7 +1076,7 @@ export default function Home() {
             )}
 
             {/* Judge Sandbox 1-Click Fallback Wallet Button */}
-            {!isConnected && (
+            {mounted && !isConnected && (
               <button
                 type="button"
                 onClick={handleSandboxConnect}
@@ -1078,14 +1093,23 @@ export default function Home() {
 
             {/* RainbowKit Real Web3 Wallet Connect Button */}
             <div className="flex items-center neu-raised-xs rounded-2xl p-0.5 bg-[#e8ecf2]">
-              <ConnectButton
-                showBalance={false}
-                accountStatus={{
-                  smallScreen: "avatar",
-                  largeScreen: "avatar",
-                }}
-                chainStatus="none"
-              />
+              {mounted ? (
+                <ConnectButton
+                  showBalance={false}
+                  accountStatus={{
+                    smallScreen: "avatar",
+                    largeScreen: "avatar",
+                  }}
+                  chainStatus="none"
+                />
+              ) : (
+                <button
+                  type="button"
+                  className="px-3 py-1.5 rounded-xl text-[11px] font-bold neu-raised-xs text-cyan-800 border border-cyan-300 cursor-pointer"
+                >
+                  Connect Wallet
+                </button>
+              )}
             </div>
 
             {/* Emergency Withdraw Button */}
@@ -1106,7 +1130,7 @@ export default function Home() {
             </button>
 
             {/* User Profile / Judge Sign In */}
-            {userSession ? (
+            {mounted && userSession ? (
               <div className="flex items-center gap-1.5">
                 <div className="hidden lg:flex flex-col text-right">
                   <span className="text-[11px] font-bold text-slate-900 leading-tight">
@@ -1286,7 +1310,7 @@ export default function Home() {
               ethPriceUsd={ethPriceUsd}
               logs={logs}
               ledgerRows={ledgerRows}
-              terminalEndRef={terminalEndRef}
+              terminalContainerRef={terminalContainerRef}
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
               sendPing={sendPing}

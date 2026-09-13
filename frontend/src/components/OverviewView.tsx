@@ -41,7 +41,8 @@ interface OverviewViewProps {
   ethPriceUsd: number;
   logs: TerminalLog[];
   ledgerRows: AuditLog[];
-  terminalEndRef: RefObject<HTMLDivElement>;
+  terminalEndRef?: RefObject<HTMLDivElement>;
+  terminalContainerRef?: RefObject<HTMLDivElement>;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   sendPing: () => void;
@@ -77,6 +78,7 @@ export default function OverviewView({
   logs,
   ledgerRows,
   terminalEndRef,
+  terminalContainerRef,
   searchQuery,
   setSearchQuery,
   sendPing,
@@ -360,6 +362,7 @@ export default function OverviewView({
 
           {/* Recessed Inset Terminal Body */}
           <div
+            ref={terminalContainerRef}
             className="flex-1 m-2 p-4 rounded-2xl neu-inset-terminal font-mono-code text-xs overflow-y-auto space-y-2 select-text"
             id="terminal-screen"
             style={{ maxHeight: "340px" }}
@@ -386,7 +389,7 @@ export default function OverviewView({
                 <div className="flex-1">{log.content}</div>
               </div>
             ))}
-            <div ref={terminalEndRef} />
+            {terminalEndRef && <div ref={terminalEndRef} />}
           </div>
 
           {/* Terminal Footer Bar */}
