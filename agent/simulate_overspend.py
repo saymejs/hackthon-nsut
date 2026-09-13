@@ -12,6 +12,9 @@ if sys.platform == "win32":
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from vault_client import VaultClient
+
+
+def simulate_overspend_attack():
     """
     Demonstrates the consensus-layer invariant by attempting a transaction
     that exceeds the smart contract spendLimit.

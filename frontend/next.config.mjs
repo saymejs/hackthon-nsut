@@ -7,6 +7,8 @@ const nextConfig = {
       fs: false,
       net: false,
       tls: false,
+      "@react-native-async-storage/async-storage": false,
+      "pino-pretty": false,
     };
     config.resolve.alias = {
       ...config.resolve.alias,
@@ -15,6 +17,8 @@ const nextConfig = {
       "@x402/core/client": false,
       "@x402/svm/exact/client": false,
       "@x402/evm": false,
+      "@react-native-async-storage/async-storage": false,
+      "pino-pretty": false,
     };
     return config;
   },

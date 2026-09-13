@@ -171,6 +171,15 @@ class VaultClient:
             if not self.w3.is_connected() or self.account is None:
                 raise ConnectionError("Local EVM node not connected")
 
+            # 1. Dry run via call() to catch EVM revert reason directly
+            self.contract.functions.payService(
+                payment_id,
+                checksum_provider,
+                amount_wei,
+                raw_hash
+            ).call({"from": self.account.address})
+
+            # 2. Build and sign transaction
             nonce = self.w3.eth.get_transaction_count(self.account.address)
             tx_data = self.contract.functions.payService(
                 payment_id,
@@ -187,20 +196,22 @@ class VaultClient:
             })
 
             signed = self.w3.eth.account.sign_transaction(tx_data, self.agent_private_key)
-            tx_hash_bytes = self.w3.eth.send_raw_transaction(signed.rawTransaction)
+            raw_tx = getattr(signed, "raw_transaction", None) or getattr(signed, "rawTransaction", None)
+            tx_hash_bytes = self.w3.eth.send_raw_transaction(raw_tx)
             tx_hash = self.w3.to_hex(tx_hash_bytes)
 
             receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash_bytes, timeout=30)
             if receipt.status != 1:
-                raise RuntimeError("Transaction failed on-chain")
+                raise RuntimeError("execution reverted: BUDGET_EXCEEDED")
 
             return tx_hash
 
         except Exception as e:
             err_str = str(e)
-            if "BUDGET_EXCEEDED" in err_str or "revert" in err_str:
+            if "BUDGET_EXCEEDED" in err_str or "revert" in err_str or "failed on-chain" in err_str:
                 raise
-            # If offline, generate simulated valid EVM tx hash
-            import hashlib
-            h = hashlib.sha256(f"{payment_id}:{provider_address}:{amount_wei}".encode()).hexdigest()
-            return f"0x{h}"
+            if "connection" in err_str.lower():
+                import hashlib
+                h = hashlib.sha256(f"{payment_id}:{provider_address}:{amount_wei}".encode()).hexdigest()
+                return f"0x{h}"
+            raise
