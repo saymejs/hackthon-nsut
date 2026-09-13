@@ -1020,23 +1020,6 @@ export default function Home() {
       });
     } catch {}
 
-    // Also call python provider on 8000
-    try {
-      await fetch("http://127.0.0.1:8000/api/v1/service/compute", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Amount-Eth": purchaseAmount.toFixed(4),
-          "X-Payment-Id": invoiceId,
-          "X-Payment-TxHash": txHash,
-        },
-        body: JSON.stringify({
-          amountEth: purchaseAmount.toFixed(4),
-          taskType: "matrix_multiplication",
-          workloadUnits: Math.round(purchaseAmount * 50000),
-        }),
-      });
-    } catch {}
   };
 
   // Button 2: Trigger AI Autonomous Agent Run (Google Gemini 1.5 Flash / Cognitive Engine)

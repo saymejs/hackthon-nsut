@@ -194,9 +194,11 @@ export async function POST(req: NextRequest) {
     // ------------------------------------------------------------------------
     // Step 1: Probe HTTP 402 Compute Endpoint
     // ------------------------------------------------------------------------
-    const host = req.headers.get("host") || "localhost:3000";
-    const protocol = req.headers.get("x-forwarded-proto") || "http";
-    const computeUrl = `${protocol}://${host}/api/service/compute`;
+    const forwardedHost = req.headers.get("x-forwarded-host");
+    const host = forwardedHost || req.headers.get("host");
+    const forwardedProto = req.headers.get("x-forwarded-proto");
+    const protocol = forwardedProto?.split(",")[0].trim() || new URL(req.url).protocol.replace(":", "");
+    const computeUrl = new URL("/api/service/compute", `${protocol}://${host || "localhost"}`).toString();
 
     const probeRes = await fetch(computeUrl, {
       method: "POST",
