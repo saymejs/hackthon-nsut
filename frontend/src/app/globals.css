@@ -1,0 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --clay-bg: #e8ecf2;
+  --clay-light: #ffffff;
+  --clay-dark: #cad3df;
+  --clay-darker: #b8c4d4;
+}
+
+body {
+  background-color: #e8ecf2;
+  color: #1e293b;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  overscroll-behavior: none;
+}
+
+.font-mono-code {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* Neumorphic Extruded Panels & Cards */
+.neu-raised {
+  background: #e8ecf2;
+  box-shadow: 8px 8px 18px #cad3df, -8px -8px 18px #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+.neu-raised-sm {
+  background: #e8ecf2;
+  box-shadow: 4px 4px 10px #cad3df, -4px -4px 10px #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+}
+.neu-raised-xs {
+  background: #e8ecf2;
+  box-shadow: 2px 2px 6px #cad3df, -2px -2px 6px #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+/* Neumorphic Debossed / Recessed Wells */
+.neu-inset {
+  background: #e4e8ef;
+  box-shadow: inset 4px 4px 8px #cad3df, inset -4px -4px 8px #ffffff;
+  border: 1px solid rgba(202, 211, 223, 0.4);
+}
+.neu-inset-sm {
+  background: #e4e8ef;
+  box-shadow: inset 2px 2px 5px #cad3df, inset -2px -2px 5px #ffffff;
+}
+.neu-inset-terminal {
+  background: #1c222e;
+  box-shadow: inset 4px 4px 12px #0f131a, inset -2px -2px 8px rgba(255, 255, 255, 0.05);
+}
+
+/* Neumorphic Buttons with Tactile States */
+.neu-btn {
+  background: #e8ecf2;
+  box-shadow: 5px 5px 12px #cad3df, -5px -5px 12px #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  transition: all 0.15s ease;
+}
+.neu-btn:hover {
+  box-shadow: 6px 6px 14px #cad3df, -6px -6px 14px #ffffff;
+  transform: translateY(-1px);
+}
+.neu-btn:active {
+  box-shadow: inset 3px 3px 6px #cad3df, inset -3px -3px 6px #ffffff;
+  transform: translateY(1px);
+}
+
+/* Active Blue Tactile Button */
+.neu-btn-primary {
+  background: linear-gradient(145deg, #1d6fee, #0052cc);
+  box-shadow: 5px 5px 14px #cad3df, -5px -5px 14px #ffffff, inset 0 1px 1px rgba(255,255,255,0.4);
+  color: #ffffff;
+  transition: all 0.15s ease;
+}
+.neu-btn-primary:hover {
+  background: linear-gradient(145deg, #2575fc, #0056d6);
+  box-shadow: 6px 6px 16px #b4c2d4, -6px -6px 16px #ffffff;
+  transform: translateY(-1px);
+}
+.neu-btn-primary:active {
+  background: #004ac6;
+  box-shadow: inset 3px 3px 7px rgba(0, 0, 0, 0.4), inset -2px -2px 6px rgba(255, 255, 255, 0.2);
+  transform: translateY(1px);
+}
+
+/* Red Tactile Button */
+.neu-btn-danger {
+  background: #fbeeed;
+  color: #ba1a1a;
+  box-shadow: 5px 5px 12px #cad3df, -5px -5px 12px #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  transition: all 0.15s ease;
+}
+.neu-btn-danger:hover {
+  box-shadow: 6px 6px 14px #cad3df, -6px -6px 14px #ffffff;
+  color: #93000a;
+  transform: translateY(-1px);
+}
+.neu-btn-danger:active {
+  box-shadow: inset 3px 3px 6px #d8c3c1, inset -3px -3px 6px #ffffff;
+  transform: translateY(1px);
+}

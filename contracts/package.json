@@ -1,0 +1,19 @@
+{
+  "name": "w3a1-contracts",
+  "version": "1.0.0",
+  "description": "Deterministic Agent Vault Smart Contract for HTTP 402 Machine Payments",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy": "hardhat run scripts/deploy.js",
+    "deploy:local": "hardhat run scripts/deploy.js --network localhost"
+  },
+  "keywords": ["ai-agent", "http402", "solidity", "smart-contract", "web3"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.0"
+  }
+}
