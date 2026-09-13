@@ -46,7 +46,7 @@ interface OverviewViewProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   sendPing: () => void;
-  triggerNormalPurchase: () => void;
+  triggerNormalPurchase: (amountEth?: string | number) => void;
   triggerAttackSimulation: () => void;
   triggerAgentRun?: () => void;
   isAgentRunning?: boolean;
@@ -60,22 +60,24 @@ interface OverviewViewProps {
     gasUsed: string;
   };
   copyToClipboard: (text: string) => void;
-  copiedId?: string | null;
+  copiedId: string | null;
   onCopy?: (id: string, text: string) => void;
   activePolicyCount?: number;
   triggerIdempotencyReplay?: () => void;
   onOpenZombieModal?: () => void;
   idempotencyBadge?: string | null;
   onResetVault?: () => void;
-  onAdjustBalance?: (newBalance: string, clearLedger: boolean) => void;
+  onAdjustBalance?: (newBalanceEth: string, clearLedger: boolean) => void;
   onClearLedger?: () => void;
 }
 
 export default function OverviewView({
+  vaultAddress,
+  ownerAddress,
+  agentAddress,
   vaultBalanceEth,
   spendLimitEth,
   totalSpentEth,
-  agentAddress,
   ethPriceUsd,
   logs,
   ledgerRows,
@@ -87,16 +89,16 @@ export default function OverviewView({
   triggerNormalPurchase,
   triggerAttackSimulation,
   triggerAgentRun,
-  isAgentRunning = false,
+  isAgentRunning,
   onEmergencyWithdraw,
-  isWithdrawPending = false,
+  isWithdrawPending,
   showRevertBanner,
   bannerFlashing,
   revertDetails,
   copyToClipboard,
   copiedId,
   onCopy,
-  activePolicyCount = 4,
+  activePolicyCount,
   triggerIdempotencyReplay,
   onOpenZombieModal,
   idempotencyBadge,
@@ -107,6 +109,7 @@ export default function OverviewView({
   const [showAdjustModal, setShowAdjustModal] = useState(false);
   const [customBalanceInput, setCustomBalanceInput] = useState(vaultBalanceEth || "0.8500");
   const [clearLedgerChecked, setClearLedgerChecked] = useState(true);
+  const [purchaseAmountEth, setPurchaseAmountEth] = useState<string>("0.0010");
 
   // Compute percentage calculations
   const limitNum = parseFloat(spendLimitEth) || 0.05;
@@ -558,6 +561,50 @@ export default function OverviewView({
           </div>
         </div>
 
+        {/* Variable Machine Payment Amount Toolbar */}
+        <div className="p-3.5 rounded-2xl neu-inset-sm bg-[#e4e8ef]/70 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 border border-blue-500/15">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-bold text-slate-800 whitespace-nowrap flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
+              Variable Purchase Value:
+            </span>
+            <div className="flex flex-wrap items-center gap-1.5 py-0.5">
+              {["0.0005", "0.0010", "0.0025", "0.0050", "0.0100", "0.0250"].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => setPurchaseAmountEth(preset)}
+                  className={`px-2.5 py-1 rounded-xl text-[11px] font-mono-code font-bold transition-all cursor-pointer ${
+                    purchaseAmountEth === preset
+                      ? "bg-slate-900 text-cyan-300 shadow-sm"
+                      : "neu-raised-xs hover:neu-inset text-slate-700"
+                  }`}
+                >
+                  {parseFloat(preset)} ETH
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5 w-full lg:w-auto">
+            <div className="relative flex-1 lg:w-36">
+              <input
+                type="number"
+                step="0.0001"
+                min="0.0001"
+                value={purchaseAmountEth}
+                onChange={(e) => setPurchaseAmountEth(e.target.value)}
+                placeholder="0.0010"
+                className="w-full px-3 py-1 text-xs font-mono-code rounded-xl neu-inset bg-transparent text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500 font-bold"
+              />
+              <span className="absolute right-2.5 top-1 text-[10px] font-bold text-slate-400">ETH</span>
+            </div>
+            <span className="text-xs font-mono-code font-bold text-blue-600 shrink-0">
+              ≈ ${((parseFloat(purchaseAmountEth) || 0) * ethPriceUsd).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+            </span>
+          </div>
+        </div>
+
         {/* Buttons Grid with Neumorphic Tactile Pill Styles */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5">
           {/* 1. Trigger Standard Purchase Button */}
@@ -565,10 +612,12 @@ export default function OverviewView({
             type="button"
             className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl neu-btn-primary font-bold text-xs cursor-pointer shadow-sm transition-all"
             id="btn-standard-purchase"
-            onClick={triggerNormalPurchase}
+            onClick={() => triggerNormalPurchase(purchaseAmountEth)}
           >
             <PlayIcon className="w-4 h-4 shrink-0" />
-            <span className="truncate">Standard Purchase (0.001 ETH)</span>
+            <span className="truncate">
+              Purchase {purchaseAmountEth ? `${parseFloat(purchaseAmountEth)} ETH` : "0.0010 ETH"} (~${((parseFloat(purchaseAmountEth) || 0.001) * ethPriceUsd).toFixed(2)})
+            </span>
           </button>
 
           {/* 2. Trigger AI Autonomous Agent Run */}

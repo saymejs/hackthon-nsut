@@ -14,6 +14,7 @@ const CHAIN_ID = parseInt(process.env.CHAIN_ID || "31337", 10);
 export async function POST(req: NextRequest) {
   const xPaymentId = req.headers.get("x-payment-id");
   const xPaymentTxHash = req.headers.get("x-payment-txhash");
+  const xAmountEth = req.headers.get("x-amount-eth");
 
   let body: any = {};
   try {
@@ -21,6 +22,11 @@ export async function POST(req: NextRequest) {
   } catch {
     body = {};
   }
+
+  const requestedEth = body.amountEth || xAmountEth || SERVICE_PRICE_ETH;
+  const numEth = parseFloat(requestedEth) || 0.001;
+  const amountEth = numEth.toFixed(4);
+  const amountWei = (BigInt(Math.floor(numEth * 1e18))).toString();
 
   // 1. Missing payment proof -> Return HTTP 402 Payment Required
   if (!xPaymentId || !xPaymentTxHash) {
@@ -31,8 +37,8 @@ export async function POST(req: NextRequest) {
     const inv = {
       paymentId,
       recipient: PROVIDER_WALLET,
-      amountWei: SERVICE_PRICE_WEI,
-      amountEth: SERVICE_PRICE_ETH,
+      amountWei,
+      amountEth,
       status: "UNPAID",
       expiresAt,
       nonce,
@@ -50,8 +56,8 @@ export async function POST(req: NextRequest) {
         invoice: {
           paymentId,
           recipient: PROVIDER_WALLET,
-          amountWei: SERVICE_PRICE_WEI,
-          amountEth: SERVICE_PRICE_ETH,
+          amountWei,
+          amountEth,
           chainId: CHAIN_ID,
           serviceEndpoint: "/api/service/compute",
           expiresAt,
@@ -100,6 +106,7 @@ export async function POST(req: NextRequest) {
   const computedOutput = {
     taskType,
     workloadUnits: workload,
+    amountEth,
     matrixResultStream: [0.981, 0.441, 0.119, 0.762, 0.334],
     executionNode: "stitch-serverless-compute-402",
     executionTimeMs: 14,

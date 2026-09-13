@@ -53,6 +53,7 @@ w3 = Web3(Web3.HTTPProvider(RPC_URL))
 class ServiceRequest(BaseModel):
     taskType: Optional[str] = "matrix_multiplication"
     workloadUnits: Optional[int] = 50
+    amountEth: Optional[str] = "0.001"
     parameters: Optional[Dict[str, Any]] = None
 
 
@@ -64,7 +65,8 @@ class ServiceRequest(BaseModel):
 async def compute_service(
     request_data: Optional[ServiceRequest] = None,
     x_payment_id: Optional[str] = Header(None, alias="X-Payment-Id"),
-    x_payment_txhash: Optional[str] = Header(None, alias="X-Payment-TxHash")
+    x_payment_txhash: Optional[str] = Header(None, alias="X-Payment-TxHash"),
+    x_amount_eth: Optional[str] = Header(None, alias="X-Amount-Eth")
 ):
     """
     HTTP 402 Machine Payment Protected Endpoint.
@@ -72,6 +74,15 @@ async def compute_service(
     - If valid payment proof is provided: verifies on-chain, executes compute, caches, and returns HTTP 200 with SHA-256 contentHash.
     - If duplicate paymentId is replayed: returns cached output with idempotencyHit: true.
     """
+    req_amount_eth = x_amount_eth or (request_data.amountEth if request_data and request_data.amountEth else SERVICE_PRICE_ETH)
+    try:
+        eth_float = float(req_amount_eth)
+        amount_eth_str = f"{eth_float:.4f}"
+        amount_wei_str = str(int(eth_float * 1e18))
+    except Exception:
+        amount_eth_str = SERVICE_PRICE_ETH
+        amount_wei_str = SERVICE_PRICE_WEI
+
     # -----------------------------------------------------------------------
     # Case 1: Unauthenticated / Missing Payment Proof -> Challenge (HTTP 402)
     # -----------------------------------------------------------------------
@@ -88,8 +99,8 @@ async def compute_service(
             "invoice": {
                 "paymentId": new_payment_id,
                 "recipient": PROVIDER_WALLET,
-                "amountWei": SERVICE_PRICE_WEI,
-                "amountEth": SERVICE_PRICE_ETH,
+                "amountWei": amount_wei_str,
+                "amountEth": amount_eth_str,
                 "chainId": CHAIN_ID,
                 "serviceEndpoint": "/api/v1/service/compute",
                 "expiresAt": expires_at,
@@ -101,7 +112,8 @@ async def compute_service(
         invoices_db[new_payment_id] = {
             "paymentId": new_payment_id,
             "status": "UNPAID",
-            "amountWei": SERVICE_PRICE_WEI,
+            "amountWei": amount_wei_str,
+            "amountEth": amount_eth_str,
             "recipient": PROVIDER_WALLET,
             "createdAt": int(time.time()),
             "expiresAt": expires_at,
@@ -186,6 +198,7 @@ async def compute_service(
     computed_output = {
         "taskType": request_data.taskType if request_data else "matrix_multiplication",
         "workloadUnits": workload,
+        "amountEth": amount_eth_str,
         "matrixResultStream": [0.981, 0.441, 0.119, 0.762, 0.334],
         "executionNode": "node-us-east-402",
         "timestamp": int(time.time())
@@ -206,7 +219,8 @@ async def compute_service(
         "cachedOutput": computed_output,
         "contentHash": content_hash,
         "fulfilledAt": fulfilled_at,
-        "amountWei": SERVICE_PRICE_WEI,
+        "amountWei": amount_wei_str,
+        "amountEth": amount_eth_str,
         "recipient": PROVIDER_WALLET
     }
     redeemed_tx_hashes[clean_txhash] = x_payment_id
@@ -218,6 +232,7 @@ async def compute_service(
             "paymentId": x_payment_id,
             "delivered": True,
             "idempotencyHit": False,
+            "amountEth": amount_eth_str,
             "result": computed_output,
             "contentHash": content_hash,
             "deliveredAt": fulfilled_at

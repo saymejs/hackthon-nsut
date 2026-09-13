@@ -814,8 +814,16 @@ export default function Home() {
     }
   };
 
-  // Button 1: Trigger Standard Purchase (0.001 ETH / ~$2.50)
-  const triggerNormalPurchase = async () => {
+  // Button 1: Trigger Variable Machine Purchase
+  const triggerNormalPurchase = async (customAmount?: string | number) => {
+    const rawVal =
+      typeof customAmount === "number"
+        ? customAmount
+        : parseFloat(String(customAmount || "0.0010"));
+    const purchaseAmount = isNaN(rawVal) || rawVal <= 0 ? 0.001 : rawVal;
+    const formattedAmountEth = `${purchaseAmount.toFixed(4)} ETH`;
+    const costUsd = ethToUsd(purchaseAmount, ethPriceUsd);
+
     const now = new Date().toISOString().substring(11, 19);
     const invoiceNum = Math.floor(1000 + Math.random() * 9000);
     const invoiceId = `inv_${invoiceNum}`;
@@ -829,16 +837,69 @@ export default function Home() {
       contentHashFull.length - 4
     )}`;
 
-    const costUsd = ethToUsd(0.001, ethPriceUsd);
+    // Check if spend exceeds limit
+    const limitNum = parseFloat(spendLimitEth) || 0.05;
+    const currentSpent = parseFloat(totalSpentEth) || 0;
+    const remainingHeadroom = Math.max(0, limitNum - currentSpent);
+
+    if (purchaseAmount > remainingHeadroom) {
+      setRevertDetails({
+        attempted: purchaseAmount.toFixed(4),
+        remaining: remainingHeadroom.toFixed(4),
+        gasUsed: "21,432",
+      });
+      setShowRevertBanner(true);
+      setBannerFlashing(true);
+      setTimeout(() => setBannerFlashing(false), 2500);
+
+      const l1 = (logs.length + 1).toString().padStart(2, "0");
+      const l2 = (logs.length + 2).toString().padStart(2, "0");
+      setLogs((prev) => [
+        ...prev,
+        {
+          num: l1,
+          time: now,
+          isAlert: true,
+          content: (
+            <>
+              <span className="text-red-400 font-bold">[EVM GUARD REVERTED]</span>{" "}
+              <span className="text-slate-200">Attempted spend:</span>{" "}
+              <strong className="text-red-300">{formattedAmountEth} (~{costUsd} USD)</strong>{" "}
+              <span className="text-slate-400">&gt; Allowance Headroom ({remainingHeadroom.toFixed(4)} ETH)</span>
+            </>
+          ),
+        },
+        {
+          num: l2,
+          time: now,
+          isAlert: true,
+          content: (
+            <span className="text-red-300">
+              Contract execution reverted: Invariant Hold Violation (Spend Limit Exceeded). Vault preserved.
+            </span>
+          ),
+        },
+      ]);
+      return;
+    }
+
+    // Check if vault balance has enough funds
+    const currentBal = parseFloat(vaultBalanceEth) || 0;
+    if (currentBal < purchaseAmount) {
+      alert(
+        `Insufficient Vault Balance!\n\nAttempted: ${formattedAmountEth}\nAvailable: ${currentBal.toFixed(
+          4
+        )} ETH\n\nPlease re-fund vault or use "Set Value".`
+      );
+      return;
+    }
 
     // Update spend state
-    const currentSpent = parseFloat(totalSpentEth) || 0;
-    const newSpent = (currentSpent + 0.001).toFixed(4);
+    const newSpent = (currentSpent + purchaseAmount).toFixed(4);
     setTotalSpentEth(newSpent);
 
     // Deduct live vault balance
-    const currentBal = parseFloat(vaultBalanceEth) || 0;
-    const newBal = Math.max(0, currentBal - 0.001).toFixed(4);
+    const newBal = Math.max(0, currentBal - purchaseAmount).toFixed(4);
     setVaultBalanceEth(newBal);
     if (typeof window !== "undefined") {
       localStorage.setItem("user_custom_balance", newBal);
@@ -849,7 +910,7 @@ export default function Home() {
       id: String(Date.now()),
       invoiceId,
       provider: "0x8920...a4f2",
-      amountEth: "0.0010 ETH",
+      amountEth: formattedAmountEth,
       amountUsd: costUsd,
       contentHash: contentHashFull,
       status: "Anchored On-Chain",
@@ -874,7 +935,7 @@ export default function Home() {
             <span className="text-slate-200">/api/v1/service/compute</span>{" "}
             <span className="text-emerald-400 font-bold">-&gt; 402 PAYMENT REQUIRED</span>{" "}
             <span className="text-slate-300">
-              Amount: <strong className="text-white">0.0010 ETH (~{costUsd} USD)</strong>
+              Amount: <strong className="text-white">{formattedAmountEth} (~{costUsd} USD)</strong>
             </span>{" "}
             <span className="text-slate-400">
               (Invoice: <span className="text-cyan-300 underline">{invoiceId}</span>)
@@ -890,7 +951,7 @@ export default function Home() {
             <span className="text-slate-200">Vault.</span>
             <span className="text-cyan-300 font-semibold">payService()</span>{" "}
             <span className="text-slate-300">
-              -&gt; Settled <strong className="text-emerald-400">0.0010 ETH (~{costUsd} USD)</strong>
+              -&gt; Settled <strong className="text-emerald-400">{formattedAmountEth} (~{costUsd} USD)</strong>
             </span>{" "}
             <span className="text-cyan-300">Tx: {txHash}</span>{" "}
             <span className="text-emerald-400 font-bold">[EIP-712 Sig Verified]</span>
@@ -904,7 +965,7 @@ export default function Home() {
           <>
             <span className="text-teal-300 font-medium">EVM Guard Verified:</span>{" "}
             <span className="text-slate-200">
-              0.0010 ETH &lt;= Allowance Headroom
+              {formattedAmountEth} &lt;= Allowance Headroom ({remainingHeadroom.toFixed(4)} ETH)
             </span>{" "}
             <span className="text-emerald-400 font-bold">(Success: Invariant Holds)</span>
           </>
@@ -932,11 +993,47 @@ export default function Home() {
           txHash,
           paymentId: invoiceId,
           providerAddress: "0x89209A7B3E4f2C0123456789abcdef0123456789",
-          amountEth: "0.0010 ETH",
+          amountEth: formattedAmountEth,
           amountUsd: costUsd,
           contentHash: contentHashFull,
           status: "Anchored On-Chain",
           gasUsed: "21,432",
+        }),
+      });
+    } catch {}
+
+    // Call compute service with variable amount
+    try {
+      await fetch("/api/service/compute", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-amount-eth": purchaseAmount.toFixed(4),
+          "x-payment-id": invoiceId,
+          "x-payment-txhash": txHash,
+        },
+        body: JSON.stringify({
+          amountEth: purchaseAmount.toFixed(4),
+          taskType: "matrix_multiplication",
+          workloadUnits: Math.round(purchaseAmount * 50000),
+        }),
+      });
+    } catch {}
+
+    // Also call python provider on 8000
+    try {
+      await fetch("http://127.0.0.1:8000/api/v1/service/compute", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Amount-Eth": purchaseAmount.toFixed(4),
+          "X-Payment-Id": invoiceId,
+          "X-Payment-TxHash": txHash,
+        },
+        body: JSON.stringify({
+          amountEth: purchaseAmount.toFixed(4),
+          taskType: "matrix_multiplication",
+          workloadUnits: Math.round(purchaseAmount * 50000),
         }),
       });
     } catch {}
