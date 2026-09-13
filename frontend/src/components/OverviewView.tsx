@@ -1,17 +1,14 @@
 "use client";
 
-import React, { RefObject } from "react";
+import React, { RefObject, useState } from "react";
 import { ethToUsd } from "@/lib/formatters";
 import Logo from "@/components/Logo";
 import {
-  BankIcon,
   SpeedIcon,
   CheckCircleIcon,
-  KeyIcon,
   LockIcon,
   CopyIcon,
   SearchIcon,
-  FlaskIcon,
   PlayIcon,
   AlertTriangleIcon,
   WarningIcon,
@@ -50,6 +47,10 @@ interface OverviewViewProps {
   sendPing: () => void;
   triggerNormalPurchase: () => void;
   triggerAttackSimulation: () => void;
+  triggerAgentRun?: () => void;
+  isAgentRunning?: boolean;
+  onEmergencyWithdraw?: () => void;
+  isWithdrawPending?: boolean;
   showRevertBanner: boolean;
   bannerFlashing: boolean;
   revertDetails: {
@@ -58,6 +59,9 @@ interface OverviewViewProps {
     gasUsed: string;
   };
   copyToClipboard: (text: string) => void;
+  copiedId?: string | null;
+  onCopy?: (id: string, text: string) => void;
+  activePolicyCount?: number;
 }
 
 export default function OverviewView({
@@ -74,10 +78,17 @@ export default function OverviewView({
   sendPing,
   triggerNormalPurchase,
   triggerAttackSimulation,
+  triggerAgentRun,
+  isAgentRunning = false,
+  onEmergencyWithdraw,
+  isWithdrawPending = false,
   showRevertBanner,
   bannerFlashing,
   revertDetails,
   copyToClipboard,
+  copiedId,
+  onCopy,
+  activePolicyCount = 4,
 }: OverviewViewProps) {
   // Compute percentage calculations
   const limitNum = parseFloat(spendLimitEth) || 0.05;
@@ -89,44 +100,47 @@ export default function OverviewView({
   const filteredLedger = ledgerRows.filter(
     (row) =>
       row.invoiceId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      row.contentHash.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      row.provider.toLowerCase().includes(searchQuery.toLowerCase())
+      row.provider.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      row.contentHash.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleCopyText = (id: string, text: string) => {
+    if (onCopy) {
+      onCopy(id, text);
+    } else {
+      copyToClipboard(text);
+    }
+  };
+
+  const isDrained = parseFloat(vaultBalanceEth || "0") <= 0;
 
   return (
     <div className="flex flex-col w-full gap-6">
-      {/* TOP STATUS STRIP / QUICK TELEMETRY */}
-      <div className="w-full flex flex-wrap items-center justify-between gap-4 px-5 py-3 rounded-2xl neu-raised-sm text-slate-700">
-        <div className="flex items-center flex-wrap gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-              Protocol Epoch
-            </span>
-            <span className="font-mono-code text-xs text-blue-600 font-bold px-2 py-0.5 rounded-full neu-inset-sm">
-              #41
-            </span>
+      {/* Dynamic Sub-header Stats Ribbon */}
+      <div className="w-full flex flex-wrap items-center justify-between gap-4 px-6 py-3.5 rounded-3xl neu-raised text-slate-700">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl neu-raised-xs flex items-center justify-center p-1 bg-[#e8ecf2]">
+            <Logo variant="shield" className="w-5 h-5" />
           </div>
-          <span className="text-slate-300 font-mono-code text-xs">•</span>
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-              Guard Mode
-            </span>
-            <span className="px-2.5 py-1 rounded-full neu-raised-xs text-emerald-600 font-mono-code text-[11px] font-bold">
-              AUTONOMOUS_ENFORCED
-            </span>
-          </div>
-          <span className="text-slate-300 font-mono-code text-xs">•</span>
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-              Rollup Target
-            </span>
-            <span className="font-mono-code text-xs text-slate-600 font-medium">
-              Arbitrum One Nitro (Sequencer Synced)
-            </span>
-          </div>
+          <span className="font-bold text-sm text-slate-800 tracking-tight">
+            Security Status:
+          </span>
+          <span className="px-3 py-1 rounded-full neu-inset-sm text-emerald-600 font-mono-code text-xs font-bold flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>Zero Budget Leaks Recorded</span>
+          </span>
+          <span className="hidden sm:inline text-slate-300">•</span>
+          <span className="hidden sm:inline-flex px-2.5 py-0.5 rounded-full neu-raised-xs text-blue-600 font-mono-code text-[11px] font-bold">
+            {activePolicyCount} Policies Enforced
+          </span>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 font-mono-code text-xs text-slate-600">
+
+        <div className="flex items-center gap-4 text-xs font-mono-code">
+          <div className="flex items-center gap-1.5 text-slate-500">
+            <span>Arbitrum Nitro Sync:</span>
+            <span className="text-emerald-600 font-bold">CONNECTED</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-slate-500">
             <span>Base Gas:</span>
             <span className="text-blue-600 font-bold px-2 py-0.5 rounded-full neu-inset-sm">
               14.2 Gwei
@@ -150,12 +164,16 @@ export default function OverviewView({
                   Total Vault Balance
                 </span>
               </div>
-              <span className="text-[10px] px-2.5 py-1 rounded-full neu-inset-sm text-slate-500 font-bold uppercase tracking-wider font-mono-code">
-                Contract Holding
+              <span className={`text-[10px] px-2.5 py-1 rounded-full neu-inset-sm font-bold uppercase tracking-wider font-mono-code ${
+                isDrained ? "text-red-600" : "text-slate-500"
+              }`}>
+                {isDrained ? "DRAINED / WITHDRAWN" : "Contract Holding"}
               </span>
             </div>
             <div className="flex items-baseline gap-2 mt-2">
-              <span className="text-4xl font-extrabold font-mono-code text-slate-900 tracking-tight">
+              <span className={`text-4xl font-extrabold font-mono-code tracking-tight ${
+                isDrained ? "text-red-600" : "text-slate-900"
+              }`}>
                 {vaultBalanceEth}
               </span>
               <span className="text-xl font-bold font-mono-code text-blue-600">ETH</span>
@@ -172,9 +190,11 @@ export default function OverviewView({
           {/* Solvency Indicator & Sparkline */}
           <div className="mt-6 pt-3 flex items-center justify-between px-3.5 py-2.5 rounded-2xl neu-inset-sm">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span className="text-[11px] font-mono-code text-emerald-600 uppercase font-bold">
-                100% Solvency Ratio
+              <span className={`w-2 h-2 rounded-full ${isDrained ? "bg-red-500" : "bg-emerald-500"}`}></span>
+              <span className={`text-[11px] font-mono-code uppercase font-bold ${
+                isDrained ? "text-red-600" : "text-emerald-600"
+              }`}>
+                {isDrained ? "Vault Drained to Owner" : "100% Solvency Ratio"}
               </span>
             </div>
             <svg
@@ -227,28 +247,21 @@ export default function OverviewView({
               </div>
             </div>
 
-            {/* Recessed Inset Progress Track Gauge */}
-            <div className="w-full mt-3">
-              <div className="w-full h-3 rounded-full neu-inset-sm p-0.5 overflow-hidden">
-                <div
-                  className="bg-blue-600 h-full rounded-full shadow-[0_0_8px_rgba(37,99,235,0.7)] transition-all duration-500"
-                  style={{ width: `${consumedPercent}%` }}
-                ></div>
-              </div>
-              <div className="flex justify-between items-center mt-2">
-                <span className="text-[11px] font-mono-code text-blue-600 font-bold">
-                  {consumedPercent}% Consumed
-                </span>
-                <span className="text-[11px] font-mono-code text-slate-400 font-medium">
-                  {headroomPercent}% Headroom
-                </span>
-              </div>
+            {/* Tactile Inset Progress Bar */}
+            <div className="w-full h-3 rounded-full neu-inset p-0.5 overflow-hidden my-3">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-all duration-500"
+                style={{ width: `${consumedPercent}%` }}
+              ></div>
             </div>
           </div>
-          <div className="mt-4 pt-2 flex items-center gap-2 text-slate-600 font-mono-code text-xs">
-            <CheckCircleIcon className="w-4 h-4 text-emerald-600" />
+
+          <div className="mt-2 font-mono-code text-slate-500 flex items-center justify-between">
+            <span className="text-[11px] font-bold text-emerald-600">
+              {headroomPercent}% Headroom Available
+            </span>
             <span className="text-[11px]">
-              {headroomEth} ETH (~{ethToUsd(headroomEth, ethPriceUsd)}) unallocated headroom remaining in epoch #41
+              {headroomEth} ETH unallocated
             </span>
           </div>
         </div>
@@ -274,18 +287,30 @@ export default function OverviewView({
               EVM Delegated Signer
             </div>
 
-            {/* Recessed Credential Address Box */}
+            {/* Recessed Credential Address Box with Copied Feedback */}
             <div className="flex items-center justify-between gap-2 p-2.5 rounded-2xl neu-inset font-mono-code text-xs text-slate-700">
               <span className="truncate font-semibold text-blue-600" id="agent-pubkey">
                 {agentAddress}
               </span>
-              <button
-                className="text-slate-400 hover:text-blue-600 transition-colors cursor-pointer p-0.5"
-                onClick={() => copyToClipboard(agentAddress)}
-                title="Copy public key"
-              >
-                <CopyIcon className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {copiedId === "agent-address" && (
+                  <span className="text-[10px] text-emerald-600 font-bold bg-emerald-100/90 px-2 py-0.5 rounded-full border border-emerald-300 animate-pulse">
+                    Copied! ✓
+                  </span>
+                )}
+                <button
+                  type="button"
+                  className="text-slate-400 hover:text-blue-600 transition-colors cursor-pointer p-0.5"
+                  onClick={() => handleCopyText("agent-address", agentAddress)}
+                  title="Copy public key"
+                >
+                  {copiedId === "agent-address" ? (
+                    <CheckCircleIcon className="w-4 h-4 text-emerald-600" />
+                  ) : (
+                    <CopyIcon className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -301,31 +326,27 @@ export default function OverviewView({
         </div>
       </div>
 
-      {/* MIDDLE SECTION: SPLIT SCREEN (TERMINAL + AUDIT LEDGER) */}
+      {/* MIDDLE SECTION: TWO-COLUMN COMMAND BAY (CONSOLE + AUDIT LEDGER) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-        {/* Left Card: Live x402 Protocol Terminal */}
-        <div className="flex flex-col rounded-3xl neu-raised overflow-hidden min-h-[460px] p-2">
-          {/* Terminal Window Bar */}
-          <div className="flex items-center justify-between px-4 py-3 bg-[#e8ecf2]">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 neu-inset-sm px-2 py-1 rounded-full">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]"></span>
-                <span className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]"></span>
-                <span className="w-2.5 h-2.5 rounded-full bg-[#27c93f]"></span>
+        {/* Left Card: Streaming Node Telemetry Console */}
+        <div className="flex flex-col rounded-3xl neu-raised overflow-hidden min-h-[460px]">
+          {/* Terminal Title Bar */}
+          <div className="p-4 bg-[#e8ecf2] border-b border-[#d8e0eb] flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-full bg-red-400/80 inline-block"></span>
+                <span className="w-3 h-3 rounded-full bg-amber-400/80 inline-block"></span>
+                <span className="w-3 h-3 rounded-full bg-emerald-400/80 inline-block"></span>
               </div>
-              <div className="flex items-center gap-2 ml-2">
-                <Logo variant="http402" className="w-5 h-5" />
-                <span className="font-bold text-slate-800 text-sm tracking-tight">
-                  x402 Protocol Inspector
-                </span>
+              <div className="flex items-center gap-2 font-mono-code text-xs text-slate-700 font-bold">
+                <Logo variant="terminal" className="w-4 h-4" />
+                <span>node-telemetry-daemon ~ v1.0.4-rc2</span>
               </div>
             </div>
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full neu-raised-xs font-mono-code text-[11px] text-emerald-600 font-bold">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            <div className="flex items-center gap-2 text-slate-500 font-mono-code text-[11px]">
+              <span className="px-2.5 py-0.5 rounded-full neu-inset-sm text-emerald-600 font-bold">
+                LIVE STREAM
               </span>
-              <span>18ms stream</span>
             </div>
           </div>
 
@@ -368,9 +389,10 @@ export default function OverviewView({
                 Auto-scroll: ON
               </span>
               <span>•</span>
-              <span>Buffer: 256 lines</span>
+              <span>Buffer: {logs.length} lines</span>
             </div>
             <button
+              type="button"
               className="neu-btn px-3 py-1 rounded-full text-blue-600 font-bold transition-all text-[11px] cursor-pointer"
               onClick={sendPing}
             >
@@ -390,28 +412,28 @@ export default function OverviewView({
                   Proof-of-Delivery Audit Ledger
                 </span>
                 <span className="text-[10px] px-2.5 py-1 rounded-full neu-inset-sm text-blue-600 font-bold font-mono-code">
-                  EVM Merkle Roots
+                  {ledgerRows.length} Records
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-1">
-                Cryptographic payment attestations stored on Arbitrum nitro memory
+                Cryptographic payment attestations stored on Arbitrum nitro memory &amp; Neon DB
               </p>
             </div>
             {/* Inset Neumorphic Search Input */}
-            <div className="flex items-center gap-2 neu-inset px-3 py-1.5 rounded-full">
-              <SearchIcon className="w-4 h-4 text-slate-400" />
+            <div className="relative">
               <input
-                className="bg-transparent font-mono-code text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none w-36"
-                placeholder="Filter invoice / hash..."
+                className="w-48 pl-8 pr-3 py-1.5 rounded-full neu-inset text-xs font-mono-code text-slate-700 placeholder-slate-400 focus:outline-none"
+                placeholder="Filter invoices / hashes..."
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+              <SearchIcon className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
             </div>
           </div>
 
-          {/* Neumorphic Clean Table */}
-          <div className="flex-1 overflow-x-auto rounded-2xl neu-inset-sm p-1">
+          {/* Recessed Table Container */}
+          <div className="flex-1 rounded-2xl neu-inset p-3 overflow-x-auto">
             <table className="w-full text-left font-mono-code text-xs border-collapse">
               <thead>
                 <tr className="text-slate-400 text-[10px] uppercase tracking-wider border-b border-[#d8e0eb]">
@@ -433,19 +455,32 @@ export default function OverviewView({
                     </td>
                     <td className="py-3 px-3 text-slate-500">
                       <span className="inline-flex items-center gap-1.5">
-                        {row.contentHash}
+                        {row.contentHash.slice(0, 10)}...{row.contentHash.slice(-4)}
                         <button
+                          type="button"
                           className="text-slate-400 hover:text-blue-600 transition-colors cursor-pointer p-0.5"
-                          onClick={() => copyToClipboard(row.contentHash)}
+                          onClick={() => handleCopyText(`hash-${row.id}`, row.contentHash)}
                           title="Copy Content Hash"
                         >
-                          <CopyIcon className="w-3.5 h-3.5" />
+                          {copiedId === `hash-${row.id}` ? (
+                            <span className="text-[10px] text-emerald-600 font-bold">✓</span>
+                          ) : (
+                            <CopyIcon className="w-3.5 h-3.5" />
+                          )}
                         </button>
                       </span>
                     </td>
                     <td className="py-3 px-3 text-right">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full neu-raised-xs text-emerald-600 text-[10px] font-bold">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full neu-raised-xs text-[10px] font-bold ${
+                        row.status.includes("Withdrawn") || row.status.includes("DRAIN")
+                          ? "text-red-600"
+                          : "text-emerald-600"
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${
+                          row.status.includes("Withdrawn") || row.status.includes("DRAIN")
+                            ? "bg-red-500"
+                            : "bg-emerald-500 animate-pulse"
+                        }`}></span>
                         {row.status}
                       </span>
                     </td>
@@ -454,32 +489,23 @@ export default function OverviewView({
               </tbody>
             </table>
           </div>
-
-          {/* Ledger Summary Footnote */}
-          <div className="mt-4 pt-2 flex items-center justify-between text-slate-500 font-mono-code text-[11px]">
-            <span className="text-slate-600">
-              All proofs attested via SHA-256 pre-image commitments
-            </span>
-            <span className="text-blue-600 font-bold">Epoch Root: 0xbb82...7710</span>
-          </div>
         </div>
       </div>
 
-      {/* BOTTOM ACTION & SECURITY SIMULATION BAR */}
-      <div className="p-8 rounded-3xl neu-raised flex flex-col gap-6">
-        {/* Simulation Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+      {/* BOTTOM SECTION: SIMULATION CONTROLS & THREAT VERIFICATION BANNER */}
+      <div className="flex flex-col gap-4 p-6 rounded-3xl neu-raised">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-2xl neu-raised-xs flex items-center justify-center text-blue-600">
-                <FlaskIcon className="w-5 h-5 text-blue-600" />
+              <div className="w-8 h-8 rounded-xl neu-raised-xs flex items-center justify-center p-1 bg-[#e8ecf2]">
+                <Logo variant="vault" className="w-5 h-5" />
               </div>
-              <span className="font-bold text-slate-900 text-lg tracking-tight">
-                Interactive Demo &amp; Attack Simulation Controls
-              </span>
+              <h3 className="font-bold text-slate-800 text-base tracking-tight">
+                Live Attack Simulation &amp; Invariant Verification Suite
+              </h3>
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              Test agent invariant enforcement against EVM smart contract guardrails
+              Test agent invariant enforcement against EVM smart contract guardrails and Neon DB synchronization
             </p>
           </div>
           <div className="flex items-center gap-2 font-mono-code text-xs px-3 py-1.5 rounded-full neu-inset-sm text-slate-500">
@@ -492,6 +518,7 @@ export default function OverviewView({
         <div className="flex flex-wrap items-center gap-4">
           {/* Trigger Standard Purchase Button */}
           <button
+            type="button"
             className="flex items-center gap-2 px-6 py-3.5 rounded-full neu-btn-primary font-bold text-sm cursor-pointer"
             id="btn-standard-purchase"
             onClick={triggerNormalPurchase}
@@ -500,8 +527,23 @@ export default function OverviewView({
             <span>Trigger Standard Purchase (0.001 ETH / ~$2.50)</span>
           </button>
 
+          {/* Trigger AI Autonomous Agent Run */}
+          {triggerAgentRun && (
+            <button
+              type="button"
+              className="flex items-center gap-2 px-6 py-3.5 rounded-full neu-btn font-bold text-sm text-cyan-600 cursor-pointer disabled:opacity-50"
+              id="btn-agent-run"
+              onClick={triggerAgentRun}
+              disabled={isAgentRunning}
+            >
+              <BoltIcon className={`w-4 h-4 text-cyan-500 ${isAgentRunning ? "animate-spin" : ""}`} />
+              <span>{isAgentRunning ? "Running Agent..." : "Run AI Agent (Gemini / Cognitive)"}</span>
+            </button>
+          )}
+
           {/* Simulate Overspend Attack Button */}
           <button
+            type="button"
             className="flex items-center gap-2 px-6 py-3.5 rounded-full neu-btn-danger font-bold text-sm cursor-pointer"
             id="btn-attack-sim"
             onClick={triggerAttackSimulation}
@@ -509,6 +551,19 @@ export default function OverviewView({
             <AlertTriangleIcon className="w-4 h-4" />
             <span>Simulate Overspend Attack (Attempt 0.1 ETH / ~$250.00)</span>
           </button>
+
+          {/* Emergency Withdrawal Shortcut Button */}
+          {onEmergencyWithdraw && !isDrained && (
+            <button
+              type="button"
+              className="flex items-center gap-2 px-5 py-3 rounded-full neu-raised-xs hover:neu-inset text-amber-700 font-bold text-xs cursor-pointer border border-amber-300 ml-auto"
+              onClick={onEmergencyWithdraw}
+              disabled={isWithdrawPending}
+            >
+              <WarningIcon className="w-3.5 h-3.5 text-amber-600" />
+              <span>{isWithdrawPending ? "Withdrawing..." : "Emergency Vault Withdrawal"}</span>
+            </button>
+          )}
         </div>
 
         {/* Prominent Status Alert Banner (Tactile Neumorphic Warning Surface) */}

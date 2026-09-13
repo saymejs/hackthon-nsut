@@ -2,8 +2,9 @@
 
 import React, { useState } from "react";
 import { ethToUsd } from "@/lib/formatters";
-import { ReceiptIcon, DownloadIcon, SearchIcon, CopyIcon } from "@/components/Icons";
+import { ReceiptIcon, DownloadIcon, SearchIcon, CopyIcon, CheckCircleIcon } from "@/components/Icons";
 import Logo from "@/components/Logo";
+import { AuditLog } from "@/components/OverviewView";
 
 interface Transaction {
   id: string;
@@ -15,19 +16,27 @@ interface Transaction {
   amountUsd: string;
   txHash: string;
   contentHash: string;
-  status: "SETTLED" | "REVERTED" | "CACHED";
+  status: "SETTLED" | "REVERTED" | "CACHED" | "WITHDRAWN";
   gasUsed: string;
 }
 
 interface TransactionsViewProps {
   ethPriceUsd: number;
+  ledgerRows?: AuditLog[];
+  copiedId?: string | null;
+  onCopy?: (id: string, text: string) => void;
 }
 
-export default function TransactionsView({ ethPriceUsd }: TransactionsViewProps) {
+export default function TransactionsView({
+  ethPriceUsd,
+  ledgerRows,
+  copiedId,
+  onCopy,
+}: TransactionsViewProps) {
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const transactions: Transaction[] = [
+  const baseTransactions: Transaction[] = [
     {
       id: "tx-104",
       timestamp: "12s ago",
@@ -84,7 +93,7 @@ export default function TransactionsView({ ethPriceUsd }: TransactionsViewProps)
       id: "tx-100",
       timestamp: "5m ago",
       invoiceId: "inv_98a4",
-      service: "POST /api/v1/service/compute",
+      service: "POST /api/v1/service/sentiment",
       provider: "0x8920...a4f2",
       amountEth: "0.0005 ETH",
       amountUsd: "~$1.25",
@@ -95,7 +104,31 @@ export default function TransactionsView({ ethPriceUsd }: TransactionsViewProps)
     },
   ];
 
-  const filtered = transactions.filter((tx) => {
+  // Dynamically merge live transactions from ledgerRows if present
+  const dynamicRows: Transaction[] = (ledgerRows || []).map((row) => ({
+    id: `dyn-${row.id}`,
+    timestamp: row.timestamp,
+    invoiceId: row.invoiceId,
+    service: row.invoiceId.includes("WITHDRAW") ? "EVM Emergency Drain" : "POST /api/v1/service/compute",
+    provider: row.provider,
+    amountEth: row.amountEth,
+    amountUsd: row.amountUsd,
+    txHash: `0x${row.id.padStart(64, "0")}`,
+    contentHash: row.contentHash,
+    status: row.status.includes("Withdrawn") || row.status.includes("DRAIN")
+      ? "WITHDRAWN"
+      : row.status.includes("Revert")
+      ? "REVERTED"
+      : "SETTLED",
+    gasUsed: "21,432",
+  }));
+
+  // Unique merged transactions
+  const combined = [...dynamicRows, ...baseTransactions].filter(
+    (tx, index, self) => index === self.findIndex((t) => t.invoiceId === tx.invoiceId)
+  );
+
+  const filtered = combined.filter((tx) => {
     const matchesStatus = filterStatus === "ALL" || tx.status === filterStatus;
     const matchesSearch =
       tx.invoiceId.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -104,12 +137,16 @@ export default function TransactionsView({ ethPriceUsd }: TransactionsViewProps)
     return matchesStatus && matchesSearch;
   });
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
+  const handleCopyText = (id: string, text: string) => {
+    if (onCopy) {
+      onCopy(id, text);
+    } else {
+      navigator.clipboard.writeText(text);
+    }
   };
 
   const exportJSON = () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(transactions, null, 2));
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(combined, null, 2));
     const downloadAnchor = document.createElement("a");
     downloadAnchor.setAttribute("href", dataStr);
     downloadAnchor.setAttribute("download", "agent_vault_transactions.json");
@@ -131,15 +168,16 @@ export default function TransactionsView({ ethPriceUsd }: TransactionsViewProps)
               Agent On-Chain Transaction Ledger
             </h2>
             <span className="px-2.5 py-0.5 rounded-full neu-inset-sm text-blue-600 font-mono-code text-[11px] font-bold">
-              {transactions.length} RECORDS
+              {combined.length} RECORDS
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Complete audit record of all automated payments settled or blocked by <code className="font-mono-code text-blue-600">AgentVault.sol</code>
+            Complete audit record of all automated payments settled or blocked by <code className="font-mono-code text-blue-600">AgentVault.sol</code> and synced with Neon DB
           </p>
         </div>
 
         <button
+          type="button"
           onClick={exportJSON}
           className="neu-btn px-4 py-2 rounded-2xl text-xs font-bold text-slate-700 flex items-center gap-2 cursor-pointer"
         >
@@ -151,23 +189,27 @@ export default function TransactionsView({ ethPriceUsd }: TransactionsViewProps)
       {/* Summary KPI Strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="p-4 rounded-2xl neu-raised-sm flex flex-col">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Settled Volume</span>
-          <span className="font-mono-code text-base font-extrabold text-slate-900 mt-1">0.0035 ETH</span>
-          <span className="font-mono-code text-[11px] text-slate-500">≈ $8.75 USD</span>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Settled Records</span>
+          <span className="font-mono-code text-base font-extrabold text-slate-900 mt-1">
+            {combined.filter((t) => t.status === "SETTLED").length} Settled
+          </span>
+          <span className="font-mono-code text-[11px] text-slate-500">Live consensus proofs</span>
         </div>
         <div className="p-4 rounded-2xl neu-raised-sm flex flex-col">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Success Rate</span>
-          <span className="font-mono-code text-base font-extrabold text-emerald-600 mt-1">100% Valid</span>
-          <span className="font-mono-code text-[11px] text-slate-500">4 Approved Invoices</span>
+          <span className="font-mono-code text-base font-extrabold text-emerald-600 mt-1">100% Invariant</span>
+          <span className="font-mono-code text-[11px] text-slate-500">Zero budget leaks</span>
         </div>
         <div className="p-4 rounded-2xl neu-raised-sm flex flex-col">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Breach Blocked</span>
-          <span className="font-mono-code text-base font-extrabold text-red-600 mt-1">1 Attack</span>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Breaches Blocked</span>
+          <span className="font-mono-code text-base font-extrabold text-red-600 mt-1">
+            {combined.filter((t) => t.status === "REVERTED").length} Attacks
+          </span>
           <span className="font-mono-code text-[11px] text-slate-500">0 ETH ($0.00) Lost</span>
         </div>
         <div className="p-4 rounded-2xl neu-raised-sm flex flex-col">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Avg Gas Consumed</span>
-          <span className="font-mono-code text-base font-extrabold text-blue-600 mt-1">42,614</span>
+          <span className="font-mono-code text-base font-extrabold text-blue-600 mt-1">21,432</span>
           <span className="font-mono-code text-[11px] text-slate-500">Sub-cent execution</span>
         </div>
       </div>
@@ -175,14 +217,15 @@ export default function TransactionsView({ ethPriceUsd }: TransactionsViewProps)
       {/* Filters & Search */}
       <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl neu-raised-sm">
         <div className="flex items-center gap-2">
-          {["ALL", "SETTLED", "REVERTED"].map((st) => (
+          {["ALL", "SETTLED", "REVERTED", "WITHDRAWN"].map((st) => (
             <button
+              type="button"
               key={st}
               onClick={() => setFilterStatus(st)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer font-mono-code ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold font-mono-code transition-all cursor-pointer ${
                 filterStatus === st
-                  ? "neu-inset-sm text-blue-600"
-                  : "neu-btn text-slate-600 hover:text-slate-900"
+                  ? "neu-inset text-blue-600 font-extrabold"
+                  : "neu-raised-xs text-slate-600 hover:text-slate-900"
               }`}
             >
               {st}
@@ -190,85 +233,104 @@ export default function TransactionsView({ ethPriceUsd }: TransactionsViewProps)
           ))}
         </div>
 
-        <div className="flex items-center gap-2 neu-inset px-3 py-1.5 rounded-full">
-          <SearchIcon className="w-4 h-4 text-slate-400" />
+        <div className="relative">
           <input
             type="text"
-            className="bg-transparent font-mono-code text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none w-48"
-            placeholder="Search invoice / address / tx..."
+            placeholder="Search invoice, provider, hash..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            className="neu-inset rounded-full pl-9 pr-4 py-1.5 text-xs font-mono-code text-slate-700 placeholder-slate-400 w-64 focus:outline-none"
           />
+          <SearchIcon className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
         </div>
       </div>
 
-      {/* Full Transaction Table */}
-      <div className="neu-raised rounded-3xl p-6 overflow-hidden flex flex-col">
-        <div className="overflow-x-auto rounded-2xl neu-inset-sm p-1">
-          <table className="w-full text-left font-mono-code text-xs border-collapse">
-            <thead>
-              <tr className="text-slate-400 text-[10px] uppercase tracking-wider border-b border-[#d8e0eb]">
-                <th className="py-3 px-3">Time</th>
-                <th className="py-3 px-3">Invoice ID</th>
-                <th className="py-3 px-3">Endpoint</th>
-                <th className="py-3 px-3">Amount (ETH / USD)</th>
-                <th className="py-3 px-3">Tx Hash</th>
-                <th className="py-3 px-3">Delivery Hash</th>
-                <th className="py-3 px-3 text-right">Status</th>
+      {/* Transactions Table */}
+      <div className="rounded-3xl neu-raised p-6 overflow-x-auto">
+        <table className="w-full text-left font-mono-code text-xs border-collapse">
+          <thead>
+            <tr className="text-slate-400 text-[10px] uppercase tracking-wider border-b border-[#d8e0eb]">
+              <th className="py-3 px-3">Status</th>
+              <th className="py-3 px-3">Age</th>
+              <th className="py-3 px-3">Invoice</th>
+              <th className="py-3 px-3">Endpoint / Service</th>
+              <th className="py-3 px-3">Provider</th>
+              <th className="py-3 px-3">Amount</th>
+              <th className="py-3 px-3">Transaction Hash</th>
+              <th className="py-3 px-3">SHA-256 Deliverable</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#d8e0eb]/60">
+            {filtered.map((tx) => (
+              <tr key={tx.id} className="hover:bg-white/40 transition-colors">
+                <td className="py-3 px-3">
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full neu-raised-xs text-[10px] font-bold ${
+                      tx.status === "SETTLED"
+                        ? "text-emerald-600"
+                        : tx.status === "REVERTED"
+                        ? "text-red-600"
+                        : "text-amber-600"
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        tx.status === "SETTLED"
+                          ? "bg-emerald-500 animate-pulse"
+                          : tx.status === "REVERTED"
+                          ? "bg-red-500"
+                          : "bg-amber-500"
+                      }`}
+                    />
+                    {tx.status}
+                  </span>
+                </td>
+                <td className="py-3 px-3 text-slate-500">{tx.timestamp}</td>
+                <td className="py-3 px-3 font-bold text-blue-600">{tx.invoiceId}</td>
+                <td className="py-3 px-3 text-slate-700">{tx.service}</td>
+                <td className="py-3 px-3 text-slate-600">{tx.provider}</td>
+                <td className="py-3 px-3">
+                  <div className="font-bold text-slate-900">{tx.amountEth}</div>
+                  <div className="text-[10px] text-slate-400">{tx.amountUsd}</div>
+                </td>
+                <td className="py-3 px-3 text-slate-500">
+                  <span className="inline-flex items-center gap-1.5">
+                    {tx.txHash.slice(0, 8)}...{tx.txHash.slice(-4)}
+                    <button
+                      type="button"
+                      onClick={() => handleCopyText(`tx-${tx.id}`, tx.txHash)}
+                      className="text-slate-400 hover:text-blue-600 cursor-pointer p-0.5"
+                      title="Copy Tx Hash"
+                    >
+                      {copiedId === `tx-${tx.id}` ? (
+                        <CheckCircleIcon className="w-3.5 h-3.5 text-emerald-600" />
+                      ) : (
+                        <CopyIcon className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </span>
+                </td>
+                <td className="py-3 px-3 text-slate-500">
+                  <span className="inline-flex items-center gap-1.5">
+                    {tx.contentHash.slice(0, 8)}...{tx.contentHash.slice(-4)}
+                    <button
+                      type="button"
+                      onClick={() => handleCopyText(`ch-${tx.id}`, tx.contentHash)}
+                      className="text-slate-400 hover:text-blue-600 cursor-pointer p-0.5"
+                      title="Copy Content Hash"
+                    >
+                      {copiedId === `ch-${tx.id}` ? (
+                        <CheckCircleIcon className="w-3.5 h-3.5 text-emerald-600" />
+                      ) : (
+                        <CopyIcon className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </span>
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-[#d8e0eb]/60">
-              {filtered.map((tx) => (
-                <tr key={tx.id} className="hover:bg-white/40 transition-colors">
-                  <td className="py-3 px-3 text-slate-500">{tx.timestamp}</td>
-                  <td className="py-3 px-3 font-bold text-blue-600">{tx.invoiceId}</td>
-                  <td className="py-3 px-3 text-slate-700">{tx.service}</td>
-                  <td className="py-3 px-3">
-                    <div className="text-slate-900 font-bold">{tx.amountEth}</div>
-                    <div className="text-[10px] text-slate-500">{tx.amountUsd}</div>
-                  </td>
-                  <td className="py-3 px-3 text-slate-500">
-                    <span className="inline-flex items-center gap-1">
-                      {tx.txHash.substring(0, 8)}...{tx.txHash.substring(tx.txHash.length - 6)}
-                      <button
-                        className="text-slate-400 hover:text-blue-600 transition-colors cursor-pointer p-0.5"
-                        onClick={() => copyToClipboard(tx.txHash)}
-                        title="Copy Tx Hash"
-                      >
-                        <CopyIcon className="w-3.5 h-3.5" />
-                      </button>
-                    </span>
-                  </td>
-                  <td className="py-3 px-3 text-slate-500">
-                    <span className="inline-flex items-center gap-1">
-                      {tx.contentHash.substring(0, 8)}...{tx.contentHash.substring(tx.contentHash.length - 6)}
-                      <button
-                        className="text-slate-400 hover:text-blue-600 transition-colors cursor-pointer p-0.5"
-                        onClick={() => copyToClipboard(tx.contentHash)}
-                        title="Copy Content Hash"
-                      >
-                        <CopyIcon className="w-3.5 h-3.5" />
-                      </button>
-                    </span>
-                  </td>
-                  <td className="py-3 px-3 text-right">
-                    {tx.status === "SETTLED" ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full neu-raised-xs text-emerald-600 text-[10px] font-bold">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                        Settled
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full neu-inset-sm text-red-600 text-[10px] font-bold">
-                        <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                        BUDGET_EXCEEDED
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

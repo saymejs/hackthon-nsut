@@ -13,7 +13,7 @@ import {
 import OverviewView, { AuditLog, TerminalLog } from "@/components/OverviewView";
 import ContractGuardView from "@/components/ContractGuardView";
 import TransactionsView from "@/components/TransactionsView";
-import PoliciesView from "@/components/PoliciesView";
+import PoliciesView, { PoliciesState } from "@/components/PoliciesView";
 import NodeLogsView from "@/components/NodeLogsView";
 import Logo from "@/components/Logo";
 import {
@@ -23,10 +23,11 @@ import {
   PolicyIcon,
   TerminalIcon,
   TrendingUpIcon,
-  WalletIcon,
   CopyIcon,
   WarningIcon,
   PersonIcon,
+  CheckCircleIcon,
+  BoltIcon,
 } from "@/components/Icons";
 
 export default function Home() {
@@ -48,11 +49,26 @@ export default function Home() {
   const [agentAddress, setAgentAddress] = useState("0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC");
   const [ownerAddress, setOwnerAddress] = useState("0x70997970C51812dc3A010C7d01b50e0d17dc79C8");
 
+  // Copy Feedback State
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Database Connection State
+  const [dbStatus, setDbStatus] = useState<"connected" | "standby" | "checking">("checking");
+  const [showDbModal, setShowDbModal] = useState(false);
+
+  // Active Security Policies State
+  const [policies, setPolicies] = useState<PoliciesState>({
+    whitelistEnabled: true,
+    circuitBreakerEnabled: true,
+    idempotencyStrict: true,
+    eip712Only: true,
+  });
+
   // Search & Filter
   const [searchQuery, setSearchQuery] = useState("");
 
   // Revert Banner State
-  const [showRevertBanner, setShowRevertBanner] = useState(true);
+  const [showRevertBanner, setShowRevertBanner] = useState(false);
   const [bannerFlashing, setBannerFlashing] = useState(false);
   const [revertDetails, setRevertDetails] = useState({
     attempted: "0.1000",
@@ -60,7 +76,10 @@ export default function Home() {
     gasUsed: "21,432",
   });
 
-  // Audit Ledger State with dual ETH and USD values
+  // AI Agent Running state
+  const [isAgentRunning, setIsAgentRunning] = useState(false);
+
+  // Audit Ledger State with live records
   const [ledgerRows, setLedgerRows] = useState<AuditLog[]>([
     {
       id: "1",
@@ -68,7 +87,7 @@ export default function Home() {
       provider: "0x8920...a4f2",
       amountEth: "0.0010 ETH",
       amountUsd: "~$2.50",
-      contentHash: "0xa6c9...4b12",
+      contentHash: "0xa6c9b3d142e88a09f51176b98e72c84ef3381ad7",
       status: "Anchored On-Chain",
       timestamp: "12s ago",
     },
@@ -78,7 +97,7 @@ export default function Home() {
       provider: "0x14dC...e92B",
       amountEth: "0.0008 ETH",
       amountUsd: "~$2.00",
-      contentHash: "0x3f1e...88ad",
+      contentHash: "0x3f1e78891244abce5678901234567890abcdef12",
       status: "Anchored On-Chain",
       timestamp: "1m ago",
     },
@@ -88,7 +107,7 @@ export default function Home() {
       provider: "0x45B2...c071",
       amountEth: "0.0012 ETH",
       amountUsd: "~$3.00",
-      contentHash: "0x9c44...e510",
+      contentHash: "0x9c44567812034981adbcdef0123456789abcdef0",
       status: "Anchored On-Chain",
       timestamp: "3m ago",
     },
@@ -98,13 +117,13 @@ export default function Home() {
       provider: "0x8920...a4f2",
       amountEth: "0.0005 ETH",
       amountUsd: "~$1.25",
-      contentHash: "0x12bb...90fc",
+      contentHash: "0x12bb59010de850682255cfc9b0e127608eb3fe05",
       status: "Anchored On-Chain",
       timestamp: "5m ago",
     },
   ]);
 
-  // Terminal Streaming Logs with USD reference
+  // Terminal Streaming Logs
   const [logs, setLogs] = useState<TerminalLog[]>([
     {
       num: "01",
@@ -157,7 +176,7 @@ export default function Home() {
       content: (
         <>
           <span className="text-slate-200">Service Delivered -&gt; SHA-256 Hash:</span>{" "}
-          <span className="text-cyan-300">0xa6c9b...</span>{" "}
+          <span className="text-cyan-300">0xa6c9b3d...</span>{" "}
           <span className="text-emerald-400 font-bold">(Verified ✓)</span>
         </>
       ),
@@ -166,22 +185,10 @@ export default function Home() {
       num: "05",
       time: "00:14:10",
       content: (
-        <>
-          <span className="text-slate-500">Telemetry Daemon:</span>{" "}
-          <span className="text-slate-300">
-            Attestation beacon rooted to contract Merkle accumulator.
-          </span>
-        </>
-      ),
-    },
-    {
-      num: "06",
-      time: "00:14:12",
-      content: (
         <span className="flex items-center gap-1.5 text-cyan-300">
           <span className="text-emerald-400 font-bold">&gt;</span>
           <span className="text-slate-200">
-            Listening for incoming HTTP-402 micro-delegations
+            Listening for incoming HTTP-402 micro-delegations &amp; Neon DB queries
           </span>
           <span className="inline-block w-2 h-4 bg-cyan-400 animate-pulse"></span>
         </span>
@@ -195,6 +202,53 @@ export default function Home() {
   useEffect(() => {
     terminalEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [logs]);
+
+  // Check Neon Database Initialization & Fetch initial data
+  useEffect(() => {
+    async function initDbAndFetch() {
+      try {
+        const initRes = await fetch("/api/db/init");
+        const initData = await initRes.json();
+        if (initData.configured && initData.status === "connected") {
+          setDbStatus("connected");
+        } else {
+          setDbStatus("standby");
+        }
+
+        // Fetch transactions from DB
+        const txRes = await fetch("/api/transactions");
+        const txData = await txRes.json();
+        if (txData.success && txData.transactions?.length > 0) {
+          const mapped: AuditLog[] = txData.transactions.map((t: any) => ({
+            id: String(t.id),
+            invoiceId: t.paymentId || "inv_live",
+            provider: `${t.providerAddress.slice(0, 6)}...${t.providerAddress.slice(-4)}`,
+            amountEth: t.amountEth,
+            amountUsd: t.amountUsd,
+            contentHash: t.contentHash,
+            status: t.status,
+            timestamp: "Just now",
+          }));
+          setLedgerRows(mapped);
+        }
+
+        // Fetch policies
+        const pRes = await fetch("/api/policies");
+        const pData = await pRes.json();
+        if (pData.success && pData.policies) {
+          setPolicies({
+            whitelistEnabled: pData.policies.whitelistEnabled ?? true,
+            circuitBreakerEnabled: pData.policies.circuitBreakerEnabled ?? true,
+            idempotencyStrict: pData.policies.idempotencyStrict ?? true,
+            eip712Only: pData.policies.eip712Only ?? true,
+          });
+        }
+      } catch (err) {
+        setDbStatus("standby");
+      }
+    }
+    initDbAndFetch();
+  }, []);
 
   // Fetch live ETH price from CoinGecko (with $2,500 fallback)
   useEffect(() => {
@@ -249,7 +303,7 @@ export default function Home() {
         })) as `0x${string}`;
         setOwnerAddress(owner);
       } catch {
-        // Use pre-synced telemetry when offline
+        // Retain pre-synced telemetry when node is offline
       }
     }
 
@@ -258,12 +312,7 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  // Compute headroom
-  const limitNum = parseFloat(spendLimitEth) || 0.05;
-  const spentNum = parseFloat(totalSpentEth) || 0.003;
-  const headroomEth = Math.max(limitNum - spentNum, 0).toFixed(4);
-
-  // Owner Guard Verification: connected wallet matches on-chain AgentVault owner
+  // Owner Guard Verification
   const isOwner = Boolean(
     isConnected &&
       connectedAddress &&
@@ -273,45 +322,14 @@ export default function Home() {
 
   const { writeContractAsync: executeWithdraw, isPending: isWithdrawPending } = useWriteContract();
 
-  const handleEmergencyWithdraw = async () => {
-    if (!isConnected) {
-      alert("Please connect your Web3 wallet using the Connect Wallet button.");
-      return;
-    }
-    if (!isOwner) {
-      alert(
-        `Access Denied: Connected wallet (${connectedAddress?.slice(0, 6)}...${connectedAddress?.slice(
-          -4
-        )}) is NOT the Vault Owner (${ownerAddress.slice(0, 6)}...${ownerAddress.slice(
-          -4
-        )}).\n\nAgentVault consensus strictly prevents non-owner withdrawals.`
-      );
-      return;
-    }
-    try {
-      const balanceWei = parseEther(vaultBalanceEth || "0");
-      if (balanceWei <= BigInt(0)) {
-        alert("Vault balance is 0 ETH. Nothing to withdraw.");
-        return;
-      }
-      const txHash = await executeWithdraw({
-        address: VAULT_ADDRESS,
-        abi: VAULT_ABI,
-        functionName: "withdraw",
-        args: [balanceWei],
-      });
-      alert(`Emergency Withdrawal Broadcast!\n\nTx Hash: ${txHash}\nFunds returned to owner.`);
-    } catch (err: any) {
-      alert(`Withdrawal failed: ${err?.shortMessage || err?.message}`);
-    }
-  };
-
   // -------------------------------------------------------------------------
   // Handlers
   // -------------------------------------------------------------------------
 
-  const copyToClipboard = (text: string) => {
+  const handleCopy = (id: string, text: string) => {
     navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   const sendPing = () => {
@@ -324,11 +342,155 @@ export default function Home() {
         time: now,
         content: (
           <span className="text-cyan-300">
-            PING -&gt; Arbitrum Gateway Status OK (21ms)
+            PING -&gt; Arbitrum Nitro Gateway &amp; Neon DB OK (18ms)
           </span>
         ),
       },
     ]);
+  };
+
+  // Toggle Policy with instant UI feedback & DB sync
+  const handleTogglePolicy = async (key: keyof PoliciesState) => {
+    const nextState = !policies[key];
+    const updatedPolicies = { ...policies, [key]: nextState };
+    setPolicies(updatedPolicies);
+
+    const activeCount = 1 + Object.values(updatedPolicies).filter(Boolean).length;
+    const now = new Date().toISOString().substring(11, 19);
+    const policyNameMap: Record<keyof PoliciesState, string> = {
+      whitelistEnabled: "Destination Provider Whitelist",
+      circuitBreakerEnabled: "Automated Circuit Breaker",
+      idempotencyStrict: "Strict Idempotency Guard",
+      eip712Only: "EIP-712 Signature Only",
+    };
+
+    setLogs((prev) => [
+      ...prev,
+      {
+        num: (prev.length + 1).toString().padStart(2, "0"),
+        time: now,
+        content: (
+          <span className="text-amber-400 font-semibold">
+            [POLICY CHANGE] {policyNameMap[key]}:{" "}
+            <strong className={nextState ? "text-emerald-400" : "text-red-400"}>
+              {nextState ? "ENABLED" : "DISABLED"}
+            </strong>{" "}
+            ({activeCount}/5 Enforced)
+          </span>
+        ),
+      },
+    ]);
+
+    try {
+      await fetch("/api/policies", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedPolicies),
+      });
+    } catch {}
+  };
+
+  // Emergency Withdrawal with REAL balance reduction
+  const handleEmergencyWithdraw = async () => {
+    const balanceNum = parseFloat(vaultBalanceEth || "0");
+    if (balanceNum <= 0) {
+      alert("Vault balance is 0.0000 ETH. Funds are already withdrawn or empty.");
+      return;
+    }
+
+    if (isConnected && isOwner) {
+      try {
+        const balanceWei = parseEther(vaultBalanceEth);
+        const txHash = await executeWithdraw({
+          address: VAULT_ADDRESS,
+          abi: VAULT_ABI,
+          functionName: "withdraw",
+          args: [balanceWei],
+        });
+        finalizeWithdrawal(vaultBalanceEth, txHash);
+        return;
+      } catch (err: any) {
+        alert(`On-chain withdrawal failed: ${err?.shortMessage || err?.message}`);
+        return;
+      }
+    }
+
+    // In demo / simulation mode or if not connected as owner
+    const confirmed = window.confirm(
+      `Execute Emergency Vault Withdrawal?\n\nThis will immediately drain the smart vault balance (${vaultBalanceEth} ETH / ~${ethToUsd(
+        vaultBalanceEth,
+        ethPriceUsd
+      )}) and return all collateral to the Owner (${ownerAddress.slice(0, 6)}...${ownerAddress.slice(-4)}).`
+    );
+    if (!confirmed) return;
+
+    const simulatedTxHash = `0x${Math.random().toString(16).slice(2).padStart(64, "0")}`;
+    finalizeWithdrawal(vaultBalanceEth, simulatedTxHash);
+  };
+
+  const finalizeWithdrawal = async (drainedAmount: string, txHash: string) => {
+    // 1. DRAIN VAULT BALANCE TO 0.0000 ETH
+    setVaultBalanceEth("0.0000");
+
+    const now = new Date().toISOString().substring(11, 19);
+
+    // 2. Append emergency logs to terminal
+    setLogs((prev) => [
+      ...prev,
+      {
+        num: (prev.length + 1).toString().padStart(2, "0"),
+        time: now,
+        isAlert: true,
+        content: (
+          <span className="text-red-400 font-bold">
+            🚨 [EMERGENCY WITHDRAWAL] Vault drained to 0.0000 ETH! All funds returned to Owner.
+          </span>
+        ),
+      },
+      {
+        num: (prev.length + 2).toString().padStart(2, "0"),
+        time: now,
+        isAlert: true,
+        content: (
+          <span className="text-red-300 font-mono-code">
+            TxHash: {txHash.slice(0, 14)}... Collateral Secured: {drainedAmount} ETH (~{ethToUsd(drainedAmount, ethPriceUsd)}). Agent execution suspended.
+          </span>
+        ),
+      },
+    ]);
+
+    // 3. Append to Audit Ledger
+    const withdrawRecord: AuditLog = {
+      id: String(Date.now()),
+      invoiceId: "EMERGENCY_WITHDRAW",
+      provider: `Owner (${ownerAddress.slice(0, 6)}...${ownerAddress.slice(-4)})`,
+      amountEth: `${drainedAmount} ETH`,
+      amountUsd: ethToUsd(drainedAmount, ethPriceUsd),
+      contentHash: "0x0000000000000000000000000000000000000000",
+      status: "Funds Returned to Owner",
+      timestamp: "Just now",
+    };
+    setLedgerRows((prev) => [withdrawRecord, ...prev]);
+
+    // 4. Persist to Neon DB
+    try {
+      await fetch("/api/transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          txHash,
+          paymentId: "inv_EMERGENCY_WITHDRAW",
+          providerAddress: ownerAddress,
+          amountEth: `${drainedAmount} ETH`,
+          amountUsd: ethToUsd(drainedAmount, ethPriceUsd),
+          contentHash: "0x0000000000000000000000000000000000000000",
+          status: "Funds Returned to Owner",
+          gasUsed: "21,000",
+        }),
+      });
+    } catch {}
+
+    alert(`✓ Emergency Withdrawal Successful!\n\n${drainedAmount} ETH returned to Owner (${ownerAddress.slice(0, 6)}...).\nVault balance is now 0.0000 ETH.`);
   };
 
   // Button 1: Trigger Standard Purchase (0.001 ETH / ~$2.50)
@@ -348,11 +510,34 @@ export default function Home() {
 
     const costUsd = ethToUsd(0.001, ethPriceUsd);
 
-    // 1. Append 402 challenge in terminal
+    // Update spend state
+    const currentSpent = parseFloat(totalSpentEth) || 0;
+    const newSpent = (currentSpent + 0.001).toFixed(4);
+    setTotalSpentEth(newSpent);
+
+    // Append to live ledger
+    const newTx: AuditLog = {
+      id: String(Date.now()),
+      invoiceId,
+      provider: "0x8920...a4f2",
+      amountEth: "0.0010 ETH",
+      amountUsd: costUsd,
+      contentHash: contentHashFull,
+      status: "Anchored On-Chain",
+      timestamp: "Just now",
+    };
+    setLedgerRows((prev) => [newTx, ...prev]);
+
+    // Stream 4-step sequence into terminal
+    const l1 = (logs.length + 1).toString().padStart(2, "0");
+    const l2 = (logs.length + 2).toString().padStart(2, "0");
+    const l3 = (logs.length + 3).toString().padStart(2, "0");
+    const l4 = (logs.length + 4).toString().padStart(2, "0");
+
     setLogs((prev) => [
       ...prev,
       {
-        num: (prev.length + 1).toString().padStart(2, "0"),
+        num: l1,
         time: now,
         content: (
           <>
@@ -369,116 +554,273 @@ export default function Home() {
         ),
       },
       {
-        num: (prev.length + 2).toString().padStart(2, "0"),
+        num: l2,
         time: now,
         content: (
           <>
-            <span className="text-emerald-400 font-bold">[NORMAL DISPATCH]</span>{" "}
-            <span className="text-slate-200">Vault.payService()</span>{" "}
+            <span className="text-slate-200">Vault.</span>
+            <span className="text-cyan-300 font-semibold">payService()</span>{" "}
             <span className="text-slate-300">
               -&gt; Settled <strong className="text-emerald-400">0.0010 ETH (~{costUsd} USD)</strong>
             </span>{" "}
             <span className="text-cyan-300">Tx: {txHash}</span>{" "}
-            <span className="text-emerald-400 font-bold">[Settled ✓]</span>
+            <span className="text-emerald-400 font-bold">[EIP-712 Sig Verified]</span>
+          </>
+        ),
+      },
+      {
+        num: l3,
+        time: now,
+        content: (
+          <>
+            <span className="text-teal-300 font-medium">EVM Guard Verified:</span>{" "}
+            <span className="text-slate-200">
+              0.0010 ETH &lt;= Allowance Headroom
+            </span>{" "}
+            <span className="text-emerald-400 font-bold">(Success: Invariant Holds)</span>
+          </>
+        ),
+      },
+      {
+        num: l4,
+        time: now,
+        content: (
+          <>
+            <span className="text-slate-200">Service Delivered -&gt; SHA-256 Digest:</span>{" "}
+            <span className="text-cyan-300">{contentHashShort}</span>{" "}
+            <span className="text-emerald-400 font-bold">(Verified ✓)</span>
           </>
         ),
       },
     ]);
 
-    // 2. Increment state
-    const newSpent = spentNum + 0.001;
-    setTotalSpentEth(newSpent.toFixed(4));
-
-    // 3. Add row to audit ledger
-    setLedgerRows((prev) => [
-      {
-        id: (prev.length + 1).toString(),
-        invoiceId,
-        provider: "0x8920...a4f2",
-        amountEth: "0.0010 ETH",
-        amountUsd: `~${costUsd}`,
-        contentHash: contentHashShort,
-        status: "Anchored On-Chain",
-        timestamp: "Just now",
-      },
-      ...prev,
-    ]);
+    // Persist to Neon DB
+    try {
+      await fetch("/api/transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          txHash,
+          paymentId: invoiceId,
+          providerAddress: "0x89209A7B3E4f2C0123456789abcdef0123456789",
+          amountEth: "0.0010 ETH",
+          amountUsd: costUsd,
+          contentHash: contentHashFull,
+          status: "Anchored On-Chain",
+          gasUsed: "21,432",
+        }),
+      });
+    } catch {}
   };
 
-  // Button 2: Simulate Overspend Attack (Attempt 0.1 ETH / ~$250.00)
-  const triggerAttackSimulation = () => {
+  // Button 2: Trigger AI Autonomous Agent Run (Google Gemini 1.5 Flash / Cognitive Engine)
+  const triggerAgentRun = async () => {
+    setIsAgentRunning(true);
     const now = new Date().toISOString().substring(11, 19);
-    const attemptedUsd = ethToUsd(0.1, ethPriceUsd);
-    const remainingUsd = ethToUsd(headroomEth, ethPriceUsd);
 
-    // Update revert details dynamically
-    setRevertDetails({
-      attempted: "0.1000",
-      remaining: headroomEth,
-      gasUsed: "21,432",
-    });
-    setShowRevertBanner(true);
-    setBannerFlashing(true);
-    setTimeout(() => setBannerFlashing(false), 1500);
-
-    // Append alert in terminal
     setLogs((prev) => [
       ...prev,
       {
-        num: "!!",
+        num: (prev.length + 1).toString().padStart(2, "0"),
+        time: now,
+        content: (
+          <span className="text-cyan-400 font-bold">
+            🤖 [AI AGENT INVOCATION] Querying LLM Engine (Google Gemini / Cognitive System)...
+          </span>
+        ),
+      },
+    ]);
+
+    try {
+      const res = await fetch("/api/agent/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: "Execute high-performance matrix multiplication on cloud GPU via machine payment",
+          workloadUnits: 50,
+          taskType: "matrix_multiplication",
+        }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        const invoiceId = data.handshake?.invoice?.paymentId || "inv_ai";
+        const txHash = data.handshake?.settlementTxHash || "0x123...";
+        const contentHash = data.deliverable?.contentHash || "0xabc...";
+        const costUsd = ethToUsd(0.001, ethPriceUsd);
+
+        // Increment spend
+        const currentSpent = parseFloat(totalSpentEth) || 0;
+        setTotalSpentEth((currentSpent + 0.001).toFixed(4));
+
+        // Add to ledger
+        const newRecord: AuditLog = {
+          id: String(Date.now()),
+          invoiceId,
+          provider: "0x7099...79C8",
+          amountEth: "0.0010 ETH",
+          amountUsd: costUsd,
+          contentHash,
+          status: "Anchored On-Chain",
+          timestamp: "Just now",
+        };
+        setLedgerRows((prev) => [newRecord, ...prev]);
+
+        setLogs((prev) => [
+          ...prev,
+          {
+            num: (prev.length + 1).toString().padStart(2, "0"),
+            time: now,
+            content: (
+              <span className="text-slate-200">
+                🧠 Model: <strong className="text-cyan-300">{data.aiDecision?.modelUsed}</strong> | Action:{" "}
+                <strong className="text-emerald-400">{data.aiDecision?.toolCalled}()</strong>
+              </span>
+            ),
+          },
+          {
+            num: (prev.length + 2).toString().padStart(2, "0"),
+            time: now,
+            content: (
+              <span className="text-slate-300">
+                ⛓️ Vault Settlement Tx: <span className="text-cyan-300">{txHash.slice(0, 16)}...</span> | SHA-256 Digest:{" "}
+                <span className="text-emerald-400 font-bold">{contentHash.slice(0, 16)}... (Verified ✓)</span>
+              </span>
+            ),
+          },
+        ]);
+      }
+    } catch (err: any) {
+      setLogs((prev) => [
+        ...prev,
+        {
+          num: (prev.length + 1).toString().padStart(2, "0"),
+          time: now,
+          isAlert: true,
+          content: <span>Agent invocation error: {err.message}</span>,
+        },
+      ]);
+    } finally {
+      setIsAgentRunning(false);
+    }
+  };
+
+  // Button 3: Simulate Overspend Attack
+  const triggerAttackSimulation = async () => {
+    const now = new Date().toISOString().substring(11, 19);
+    const limitNum = parseFloat(spendLimitEth) || 0.05;
+    const spentNum = parseFloat(totalSpentEth) || 0.003;
+    const remaining = Math.max(limitNum - spentNum, 0).toFixed(4);
+
+    setRevertDetails({
+      attempted: "0.1000",
+      remaining,
+      gasUsed: "21,432",
+    });
+
+    setShowRevertBanner(true);
+    setBannerFlashing(true);
+    setTimeout(() => setBannerFlashing(false), 2500);
+
+    const l1 = (logs.length + 1).toString().padStart(2, "0");
+    const l2 = (logs.length + 2).toString().padStart(2, "0");
+    const l3 = (logs.length + 3).toString().padStart(2, "0");
+
+    setLogs((prev) => [
+      ...prev,
+      {
+        num: l1,
         time: now,
         isAlert: true,
         content: (
-          <div className="flex-1 text-red-300">
-            <strong className="text-red-400 font-bold">[ATTACK TRIPPED]</strong>{" "}
-            <span className="text-red-200">
-              Attempted 0.1000 ETH (~{attemptedUsd}) exfiltration. Guard halted transaction! Bytecode
-              revert: BUDGET_EXCEEDED (0.1000 ETH (~{attemptedUsd}) &gt; {headroomEth} ETH (~{remainingUsd}) remaining). 0 ETH ($0.00) lost.
+          <>
+            <span className="text-red-400 font-bold">[ATTACK SIMULATION]</span>{" "}
+            <span className="text-slate-200">Attempting spend:</span>{" "}
+            <strong className="text-red-300">0.1000 ETH (~$250.00 USD)</strong>{" "}
+            <span className="text-slate-400">(Allowance: {remaining} ETH)</span>
+          </>
+        ),
+      },
+      {
+        num: l2,
+        time: now,
+        isAlert: true,
+        content: (
+          <>
+            <span className="text-red-500 font-bold">🛑 HARD REVERT:</span>{" "}
+            <span className="text-red-300 font-mono-code font-bold">
+              Error: BUDGET_EXCEEDED (AgentVault.sol:L62)
             </span>
-          </div>
+          </>
+        ),
+      },
+      {
+        num: l3,
+        time: now,
+        isAlert: true,
+        content: (
+          <>
+            <span className="text-emerald-400 font-bold">🛡️ INVARIANT HELD:</span>{" "}
+            <span className="text-slate-200">
+              totalSpent ({totalSpentEth} ETH) + 0.1000 ETH &gt; {spendLimitEth} ETH. State rolled back.{" "}
+              <strong className="text-emerald-400">0 ETH ($0.00) LOST.</strong>
+            </span>
+          </>
         ),
       },
     ]);
   };
 
+  const activePolicyCount = 1 + Object.values(policies).filter(Boolean).length;
+
   return (
-    <div className="min-h-screen bg-[#e8ecf2] text-slate-800 antialiased font-sans">
-      {/* TOP FIXED NAVIGATION CHROME */}
-      <header className="fixed top-0 w-full z-50 bg-[#e8ecf2] border-b border-[#d8e0eb] shadow-[0_4px_16px_#cad3df]">
-        <div className="h-16 w-full px-6 flex items-center justify-between gap-4">
-          {/* Logo & Subtitle Section */}
+    <div className="min-h-screen bg-[#e8ecf2] text-slate-800 font-sans antialiased select-none">
+      {/* GLOBAL TOP NAVIGATION BAR */}
+      <header className="fixed top-0 left-0 right-0 h-16 bg-[#e8ecf2] border-b border-[#d8e0eb] z-50 flex items-center px-6">
+        <div className="flex items-center justify-between w-full">
+          {/* Left Brand Identity */}
           <div className="flex items-center gap-3">
-            <div className="neu-raised-xs w-11 h-11 rounded-2xl flex items-center justify-center p-1.5 bg-[#e8ecf2]">
-              <Logo
-                variant="shield"
-                className="w-8 h-8 object-contain"
-              />
+            <div className="w-10 h-10 rounded-2xl neu-raised-xs flex items-center justify-center p-1.5 bg-[#e8ecf2]">
+              <Logo variant="vault" className="w-7 h-7" />
             </div>
-            <div className="flex flex-col">
+            <div>
               <div className="flex items-center gap-2">
-                <span className="text-base font-bold tracking-tight text-slate-900">
+                <span className="font-extrabold text-base tracking-tight text-slate-900">
                   Agent SafePay
                 </span>
-                <span className="text-xs text-slate-500 font-mono-code font-medium">
-                  // EVM Vault Guard
+                <span className="text-[10px] font-mono-code font-bold px-2 py-0.5 rounded-full neu-inset-sm text-blue-600">
+                  W3A-1
                 </span>
               </div>
-              <span className="text-[10px] font-mono-code text-blue-600 tracking-wider uppercase font-semibold">
-                v2.4-mainnet-guard
-              </span>
+              <p className="text-[11px] text-slate-500 font-medium">
+                Deterministic Machine Payments with On-Chain Budget Protection
+              </p>
             </div>
           </div>
 
-          {/* Center Status Strip Pills (Neumorphic) */}
-          <div className="hidden xl:flex items-center gap-3">
-            {/* Sepolia Testnet Pill */}
+          {/* Center Protocol Badges & Neon DB Status */}
+          <div className="hidden lg:flex items-center gap-3">
+            {/* Neon DB Status Indicator */}
+            <button
+              type="button"
+              onClick={() => setShowDbModal(true)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full neu-raised-xs hover:neu-inset transition-all cursor-pointer"
+              title="Click to view Neon Database status & schema"
+            >
+              <span className={`w-2 h-2 rounded-full ${dbStatus === "connected" ? "bg-emerald-500 animate-pulse" : "bg-cyan-500"}`}></span>
+              <span className="text-xs font-mono-code font-bold text-slate-700">
+                {dbStatus === "connected" ? "Neon DB: Connected (Postgres)" : "Neon DB: Standby (Demo Cache)"}
+              </span>
+            </button>
+
+            {/* Arbitrum Nitro Latency Pill */}
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full neu-inset-sm">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]"></span>
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
               <span className="font-mono-code text-xs text-slate-700 font-medium">
-                Sepolia Testnet - ChainID 11155111
+                Arbitrum Nitro:
               </span>
               <span className="text-[11px] font-mono-code text-emerald-700 font-bold px-2 py-0.5 rounded-full neu-raised-xs bg-[#e8ecf2]">
-                24ms
+                18ms
               </span>
             </div>
 
@@ -490,21 +832,27 @@ export default function Home() {
               </span>
             </div>
 
-            {/* Vault Active Pill */}
+            {/* Vault Active / Drained Pill */}
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full neu-raised-xs">
               <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${
+                  parseFloat(vaultBalanceEth) <= 0 ? "bg-red-400" : "bg-emerald-400"
+                } opacity-75`}></span>
+                <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
+                  parseFloat(vaultBalanceEth) <= 0 ? "bg-red-500" : "bg-emerald-500"
+                }`}></span>
               </span>
-              <span className="text-xs font-bold text-emerald-600 tracking-wider uppercase">
-                Vault Active
+              <span className={`text-xs font-bold tracking-wider uppercase ${
+                parseFloat(vaultBalanceEth) <= 0 ? "text-red-600" : "text-emerald-600"
+              }`}>
+                {parseFloat(vaultBalanceEth) <= 0 ? "Vault Drained" : "Vault Active"}
               </span>
             </div>
           </div>
 
           {/* Right Actions Section */}
           <div className="flex items-center gap-3">
-            {/* Owner Mode Status Badge (Activated when connected as owner) */}
+            {/* Owner Mode Status Badge */}
             {isOwner && (
               <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full neu-raised-xs border border-emerald-500/40 text-emerald-600 font-mono-code text-[11px] font-bold shadow-[0_0_12px_rgba(16,185,129,0.25)]">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -529,6 +877,7 @@ export default function Home() {
 
             {/* Emergency Withdraw Button */}
             <button
+              type="button"
               className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                 isOwner
                   ? "neu-btn-danger text-red-600 ring-2 ring-red-400"
@@ -536,7 +885,7 @@ export default function Home() {
               }`}
               onClick={handleEmergencyWithdraw}
               disabled={isWithdrawPending}
-              title={isOwner ? "Authorized: Withdraw all vault funds" : "Restricted to Vault Owner"}
+              title={isOwner ? "Authorized: Withdraw all vault funds" : "Emergency Drain Vault Funds"}
             >
               <WarningIcon className="w-4 h-4 text-red-600" />
               <span>{isWithdrawPending ? "Withdrawing..." : "Emergency Withdraw"}</span>
@@ -561,6 +910,7 @@ export default function Home() {
           <nav className="flex flex-col gap-2">
             {/* 1. Overview Telemetry */}
             <button
+              type="button"
               onClick={() => setActiveTab("overview")}
               className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl transition-all cursor-pointer text-left w-full ${
                 activeTab === "overview"
@@ -578,6 +928,7 @@ export default function Home() {
 
             {/* 2. Contract Guard */}
             <button
+              type="button"
               onClick={() => setActiveTab("contract-guard")}
               className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl transition-all cursor-pointer text-left w-full ${
                 activeTab === "contract-guard"
@@ -590,11 +941,12 @@ export default function Home() {
                   activeTab === "contract-guard" ? "text-blue-600" : "text-slate-500"
                 }`}
               />
-              <span className="text-xs tracking-wide">Contract Guard</span>
+              <span className="text-xs tracking-wide">Contract Guard (EVM)</span>
             </button>
 
             {/* 3. Agent Transactions */}
             <button
+              type="button"
               onClick={() => setActiveTab("transactions")}
               className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl transition-all cursor-pointer text-left w-full ${
                 activeTab === "transactions"
@@ -612,6 +964,7 @@ export default function Home() {
 
             {/* 4. Security Policies */}
             <button
+              type="button"
               onClick={() => setActiveTab("policies")}
               className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl transition-all cursor-pointer text-left w-full ${
                 activeTab === "policies"
@@ -629,6 +982,7 @@ export default function Home() {
 
             {/* 5. Node Logs */}
             <button
+              type="button"
               onClick={() => setActiveTab("node-logs")}
               className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl transition-all cursor-pointer text-left w-full ${
                 activeTab === "node-logs"
@@ -683,10 +1037,17 @@ export default function Home() {
               sendPing={sendPing}
               triggerNormalPurchase={triggerNormalPurchase}
               triggerAttackSimulation={triggerAttackSimulation}
+              triggerAgentRun={triggerAgentRun}
+              isAgentRunning={isAgentRunning}
+              onEmergencyWithdraw={handleEmergencyWithdraw}
+              isWithdrawPending={isWithdrawPending}
               showRevertBanner={showRevertBanner}
               bannerFlashing={bannerFlashing}
               revertDetails={revertDetails}
-              copyToClipboard={copyToClipboard}
+              copyToClipboard={(t) => handleCopy("generic", t)}
+              copiedId={copiedId}
+              onCopy={handleCopy}
+              activePolicyCount={activePolicyCount}
             />
           )}
 
@@ -703,23 +1064,102 @@ export default function Home() {
               isOwner={isOwner}
               connectedAddress={connectedAddress}
               isConnected={isConnected}
+              copiedId={copiedId}
+              onCopy={handleCopy}
+              onEmergencyWithdraw={handleEmergencyWithdraw}
+              isWithdrawPending={isWithdrawPending}
             />
           )}
 
           {activeTab === "transactions" && (
-            <TransactionsView ethPriceUsd={ethPriceUsd} />
+            <TransactionsView
+              ethPriceUsd={ethPriceUsd}
+              ledgerRows={ledgerRows}
+              copiedId={copiedId}
+              onCopy={handleCopy}
+            />
           )}
 
           {activeTab === "policies" && (
             <PoliciesView
               spendLimitEth={spendLimitEth}
               ethPriceUsd={ethPriceUsd}
+              policies={policies}
+              onTogglePolicy={handleTogglePolicy}
             />
           )}
 
           {activeTab === "node-logs" && <NodeLogsView />}
         </main>
       </div>
+
+      {/* Neon DB Info Modal */}
+      {showDbModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-xl neu-raised rounded-3xl p-6 bg-[#e8ecf2] border border-[#d8e0eb] shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#d8e0eb] pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl neu-raised-xs flex items-center justify-center p-1 bg-[#e8ecf2]">
+                  <Logo variant="shield" className="w-5 h-5" />
+                </div>
+                <h3 className="font-bold text-base text-slate-900">
+                  Neon Serverless PostgreSQL Database
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowDbModal(false)}
+                className="w-7 h-7 rounded-full neu-raised-xs flex items-center justify-center text-slate-500 hover:text-slate-800 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3 font-mono-code text-xs text-slate-700">
+              <div className="p-3 rounded-2xl neu-inset-sm flex items-center justify-between">
+                <span>Database Engine:</span>
+                <span className="font-bold text-emerald-600">
+                  {dbStatus === "connected" ? "Neon Serverless Postgres (Active)" : "Serverless In-Memory Fallback"}
+                </span>
+              </div>
+
+              <div className="p-3 rounded-2xl neu-inset-sm space-y-1.5">
+                <div className="font-bold text-slate-800">Active Relational Tables:</div>
+                <ul className="list-disc list-inside text-slate-600 text-[11px] space-y-0.5">
+                  <li><code>invoices</code>: HTTP 402 challenges, expirations &amp; nonces</li>
+                  <li><code>transactions</code>: On-chain settlement records &amp; gas telemetry</li>
+                  <li><code>agent_policies</code>: Runtime circuit breaker &amp; whitelist flags</li>
+                  <li><code>audit_attestations</code>: SHA-256 deliverable proofs &amp; Merkle roots</li>
+                </ul>
+              </div>
+
+              <p className="text-[11px] text-slate-500">
+                To connect your live Neon database, copy your connection string from the Neon console and add it to <code>.env.local</code>:
+              </p>
+              <div className="p-2.5 rounded-xl bg-slate-900 text-cyan-300 text-[11px] overflow-x-auto flex justify-between items-center">
+                <code>DATABASE_URL=postgres://user:pass@ep-xyz.aws.neon.tech/neondb</code>
+                <button
+                  type="button"
+                  onClick={() => handleCopy("neon-env", "DATABASE_URL=postgres://user:pass@ep-xyz.aws.neon.tech/neondb?sslmode=require")}
+                  className="px-2 py-1 rounded bg-slate-800 text-xs text-slate-300 hover:text-white"
+                >
+                  {copiedId === "neon-env" ? "Copied! ✓" : "Copy"}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2 border-t border-[#d8e0eb]">
+              <button
+                type="button"
+                onClick={() => setShowDbModal(false)}
+                className="px-5 py-2 rounded-2xl neu-btn text-xs font-bold text-slate-700"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

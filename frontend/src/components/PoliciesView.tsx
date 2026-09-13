@@ -1,27 +1,40 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { ethToUsd } from "@/lib/formatters";
 import Logo from "@/components/Logo";
 import {
-  PolicyIcon,
   LockIcon,
   CheckCircleIcon,
   ReplayIcon,
   BoltIcon,
   ShieldIcon,
+  WarningIcon,
 } from "@/components/Icons";
+
+export interface PoliciesState {
+  whitelistEnabled: boolean;
+  circuitBreakerEnabled: boolean;
+  idempotencyStrict: boolean;
+  eip712Only: boolean;
+}
 
 interface PoliciesViewProps {
   spendLimitEth: string;
   ethPriceUsd: number;
+  policies: PoliciesState;
+  onTogglePolicy: (key: keyof PoliciesState) => void;
 }
 
-export default function PoliciesView({ spendLimitEth, ethPriceUsd }: PoliciesViewProps) {
-  const [whitelistEnabled, setWhitelistEnabled] = useState(true);
-  const [circuitBreakerEnabled, setCircuitBreakerEnabled] = useState(true);
-  const [idempotencyStrict, setIdempotencyStrict] = useState(true);
-  const [eip712Only, setEip712Only] = useState(true);
+export default function PoliciesView({
+  spendLimitEth,
+  ethPriceUsd,
+  policies,
+  onTogglePolicy,
+}: PoliciesViewProps) {
+  // Compute enforced count: 1 immutable (Spend Ceiling) + any enabled toggles
+  const activeTogglesCount = Object.values(policies).filter(Boolean).length;
+  const totalEnforced = 1 + activeTogglesCount;
 
   return (
     <div className="flex flex-col w-full gap-6">
@@ -35,8 +48,10 @@ export default function PoliciesView({ spendLimitEth, ethPriceUsd }: PoliciesVie
             <h2 className="font-bold text-lg text-slate-900 tracking-tight">
               Active Security Guard Policies
             </h2>
-            <span className="px-2.5 py-0.5 rounded-full neu-inset-sm text-emerald-600 font-mono-code text-[11px] font-bold">
-              4 ENFORCED
+            <span className={`px-2.5 py-0.5 rounded-full neu-inset-sm font-mono-code text-[11px] font-bold transition-all ${
+              totalEnforced >= 4 ? "text-emerald-600" : "text-amber-600"
+            }`}>
+              {totalEnforced} OF 5 ENFORCED
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
@@ -83,19 +98,21 @@ export default function PoliciesView({ spendLimitEth, ethPriceUsd }: PoliciesVie
           <div>
             <div className="flex items-center justify-between gap-2 mb-3">
               <div className="flex items-center gap-2">
-                <ReplayIcon className="w-5 h-5 text-emerald-600" />
+                <ReplayIcon className={`w-5 h-5 ${policies.idempotencyStrict ? "text-emerald-600" : "text-slate-400"}`} />
                 <span className="font-bold text-slate-900 text-sm">Strict Idempotency &amp; Replay Guard</span>
               </div>
               {/* Tactile Toggle */}
               <button
-                onClick={() => setIdempotencyStrict(!idempotencyStrict)}
+                type="button"
+                onClick={() => onTogglePolicy("idempotencyStrict")}
                 className={`w-12 h-6 rounded-full p-0.5 neu-inset-sm transition-all cursor-pointer ${
-                  idempotencyStrict ? "bg-emerald-100" : "bg-slate-200"
+                  policies.idempotencyStrict ? "bg-emerald-100" : "bg-slate-200"
                 }`}
+                title={policies.idempotencyStrict ? "Disable Idempotency Guard" : "Enable Idempotency Guard"}
               >
                 <div
                   className={`w-5 h-5 rounded-full neu-raised-xs transition-all ${
-                    idempotencyStrict ? "ml-6 bg-emerald-500" : "ml-0 bg-slate-400"
+                    policies.idempotencyStrict ? "ml-6 bg-emerald-500" : "ml-0 bg-slate-400"
                   }`}
                 />
               </button>
@@ -105,11 +122,13 @@ export default function PoliciesView({ spendLimitEth, ethPriceUsd }: PoliciesVie
             </p>
             <div className="mt-4 p-3 rounded-2xl neu-inset-sm font-mono-code text-xs text-slate-700 flex justify-between items-center">
               <span>Replay Protection:</span>
-              <span className="font-bold text-emerald-600">{idempotencyStrict ? "ACTIVE (Zero-Cost Cache)" : "DISABLED"}</span>
+              <span className={`font-bold ${policies.idempotencyStrict ? "text-emerald-600" : "text-amber-600"}`}>
+                {policies.idempotencyStrict ? "ACTIVE (Zero-Cost Cache)" : "DISABLED (Permissive Replays)"}
+              </span>
             </div>
           </div>
           <div className="mt-4 pt-2 text-[11px] font-mono-code text-slate-500">
-            ✓ Double-charging prevented across all provider endpoints.
+            {policies.idempotencyStrict ? "✓ Double-charging prevented across all provider endpoints." : "⚠️ Warning: Invoices may be susceptible to multiple charges."}
           </div>
         </div>
 
@@ -118,18 +137,20 @@ export default function PoliciesView({ spendLimitEth, ethPriceUsd }: PoliciesVie
           <div>
             <div className="flex items-center justify-between gap-2 mb-3">
               <div className="flex items-center gap-2">
-                <CheckCircleIcon className="w-5 h-5 text-blue-600" />
+                <CheckCircleIcon className={`w-5 h-5 ${policies.whitelistEnabled ? "text-blue-600" : "text-slate-400"}`} />
                 <span className="font-bold text-slate-900 text-sm">Destination Provider Whitelist</span>
               </div>
               <button
-                onClick={() => setWhitelistEnabled(!whitelistEnabled)}
+                type="button"
+                onClick={() => onTogglePolicy("whitelistEnabled")}
                 className={`w-12 h-6 rounded-full p-0.5 neu-inset-sm transition-all cursor-pointer ${
-                  whitelistEnabled ? "bg-blue-100" : "bg-slate-200"
+                  policies.whitelistEnabled ? "bg-blue-100" : "bg-slate-200"
                 }`}
+                title={policies.whitelistEnabled ? "Disable Whitelist" : "Enable Whitelist"}
               >
                 <div
                   className={`w-5 h-5 rounded-full neu-raised-xs transition-all ${
-                    whitelistEnabled ? "ml-6 bg-blue-600" : "ml-0 bg-slate-400"
+                    policies.whitelistEnabled ? "ml-6 bg-blue-600" : "ml-0 bg-slate-400"
                   }`}
                 />
               </button>
@@ -139,11 +160,13 @@ export default function PoliciesView({ spendLimitEth, ethPriceUsd }: PoliciesVie
             </p>
             <div className="mt-4 p-3 rounded-2xl neu-inset-sm font-mono-code text-xs text-slate-700 flex justify-between items-center">
               <span>Whitelisted Providers:</span>
-              <span className="font-bold text-slate-900">3 Approved Endpoints</span>
+              <span className={`font-bold ${policies.whitelistEnabled ? "text-slate-900" : "text-amber-600"}`}>
+                {policies.whitelistEnabled ? "3 Approved Endpoints" : "DISABLED (All Addresses Permitted)"}
+              </span>
             </div>
           </div>
           <div className="mt-4 pt-2 text-[11px] font-mono-code text-slate-500">
-            ✓ Prevents exfiltration to hacker-controlled wallets.
+            {policies.whitelistEnabled ? "✓ Prevents exfiltration to hacker-controlled wallets." : "⚠️ Warning: Payments allowed to arbitrary external destinations."}
           </div>
         </div>
 
@@ -152,18 +175,20 @@ export default function PoliciesView({ spendLimitEth, ethPriceUsd }: PoliciesVie
           <div>
             <div className="flex items-center justify-between gap-2 mb-3">
               <div className="flex items-center gap-2">
-                <BoltIcon className="w-5 h-5 text-amber-600" />
+                <BoltIcon className={`w-5 h-5 ${policies.circuitBreakerEnabled ? "text-amber-600" : "text-slate-400"}`} />
                 <span className="font-bold text-slate-900 text-sm">Automated Circuit Breaker</span>
               </div>
               <button
-                onClick={() => setCircuitBreakerEnabled(!circuitBreakerEnabled)}
+                type="button"
+                onClick={() => onTogglePolicy("circuitBreakerEnabled")}
                 className={`w-12 h-6 rounded-full p-0.5 neu-inset-sm transition-all cursor-pointer ${
-                  circuitBreakerEnabled ? "bg-amber-100" : "bg-slate-200"
+                  policies.circuitBreakerEnabled ? "bg-amber-100" : "bg-slate-200"
                 }`}
+                title={policies.circuitBreakerEnabled ? "Disable Circuit Breaker" : "Enable Circuit Breaker"}
               >
                 <div
                   className={`w-5 h-5 rounded-full neu-raised-xs transition-all ${
-                    circuitBreakerEnabled ? "ml-6 bg-amber-500" : "ml-0 bg-slate-400"
+                    policies.circuitBreakerEnabled ? "ml-6 bg-amber-500" : "ml-0 bg-slate-400"
                   }`}
                 />
               </button>
@@ -173,11 +198,13 @@ export default function PoliciesView({ spendLimitEth, ethPriceUsd }: PoliciesVie
             </p>
             <div className="mt-4 p-3 rounded-2xl neu-inset-sm font-mono-code text-xs text-slate-700 flex justify-between items-center">
               <span>Threshold:</span>
-              <span className="font-bold text-amber-700">2 Reverts / 60s Window</span>
+              <span className={`font-bold ${policies.circuitBreakerEnabled ? "text-amber-700" : "text-slate-500"}`}>
+                {policies.circuitBreakerEnabled ? "2 Reverts / 60s Window" : "DISABLED (No Software Throttling)"}
+              </span>
             </div>
           </div>
           <div className="mt-4 pt-2 text-[11px] font-mono-code text-slate-500">
-            ✓ Prevents gas drain from repeated recursive loop failures.
+            {policies.circuitBreakerEnabled ? "✓ Prevents gas drain from repeated recursive loop failures." : "⚠️ Caution: High risk of gas drain under infinite loop conditions."}
           </div>
         </div>
       </div>

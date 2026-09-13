@@ -5,6 +5,7 @@ import React from "react";
 export type LogoVariant =
   | "shield"
   | "default"
+  | "vault"
   | "agent-key"
   | "key"
   | "evm-guard"
@@ -12,6 +13,7 @@ export type LogoVariant =
   | "http402"
   | "stream"
   | "telemetry"
+  | "terminal"
   | "node"
   | "minimal"
   | "badge";
@@ -380,7 +382,7 @@ export default function Logo({
       ? "evm-guard"
       : variant === "http402" || variant === "stream"
       ? "http402"
-      : variant === "telemetry" || variant === "node"
+      : variant === "telemetry" || variant === "node" || variant === "terminal"
       ? "telemetry"
       : variant === "minimal" || variant === "badge"
       ? "minimal"

@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { ethToUsd, formatEthAndUsd } from "@/lib/formatters";
-import { ShieldIcon, SlidersIcon, CheckCircleIcon, CodeIcon } from "@/components/Icons";
+import { ethToUsd } from "@/lib/formatters";
+import { ShieldIcon, SlidersIcon, CheckCircleIcon, CodeIcon, CopyIcon } from "@/components/Icons";
 import Logo from "@/components/Logo";
 import { useWriteContract } from "wagmi";
 import { parseEther } from "viem";
@@ -20,6 +20,10 @@ interface ContractGuardProps {
   isOwner?: boolean;
   connectedAddress?: string;
   isConnected?: boolean;
+  copiedId?: string | null;
+  onCopy?: (id: string, text: string) => void;
+  onEmergencyWithdraw?: () => void;
+  isWithdrawPending?: boolean;
 }
 
 export default function ContractGuardView({
@@ -34,11 +38,23 @@ export default function ContractGuardView({
   isOwner = false,
   connectedAddress,
   isConnected = false,
+  copiedId,
+  onCopy,
+  onEmergencyWithdraw,
+  isWithdrawPending = false,
 }: ContractGuardProps) {
   const [inputLimit, setInputLimit] = useState(spendLimitEth);
   const [updateStatus, setUpdateStatus] = useState<string | null>(null);
 
   const { writeContractAsync: executeSetLimit, isPending: isSettingLimit } = useWriteContract();
+
+  const handleCopyText = (id: string, text: string) => {
+    if (onCopy) {
+      onCopy(id, text);
+    } else {
+      navigator.clipboard.writeText(text);
+    }
+  };
 
   const handleSetLimit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,6 +91,8 @@ export default function ContractGuardView({
     );
     setTimeout(() => setUpdateStatus(null), 5000);
   };
+
+  const isDrained = parseFloat(vaultBalanceEth || "0") <= 0;
 
   return (
     <div className="flex flex-col w-full gap-6">
@@ -144,14 +162,42 @@ export default function ContractGuardView({
             </div>
             <div className="space-y-3 font-mono-code text-xs">
               <div className="p-2.5 rounded-2xl neu-inset-sm">
-                <div className="text-[10px] uppercase text-slate-400 font-bold">Human Owner</div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase text-slate-400 font-bold">Human Owner</span>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyText("owner-addr", ownerAddress)}
+                    className="text-slate-400 hover:text-blue-600 cursor-pointer"
+                    title="Copy Owner Address"
+                  >
+                    {copiedId === "owner-addr" ? (
+                      <span className="text-[10px] text-emerald-600 font-bold">Copied! ✓</span>
+                    ) : (
+                      <CopyIcon className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                </div>
                 <div className="text-slate-800 font-semibold truncate">{ownerAddress}</div>
                 <div className="text-[10px] text-emerald-600 mt-0.5">Permissions: setLimit(), setAgent(), withdraw()</div>
               </div>
               <div className="p-2.5 rounded-2xl neu-inset-sm">
-                <div className="text-[10px] uppercase text-slate-400 font-bold flex items-center gap-1.5">
-                  <Logo variant="agent-key" className="w-3.5 h-3.5" />
-                  <span>AI Agent Key</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase text-slate-400 font-bold flex items-center gap-1.5">
+                    <Logo variant="agent-key" className="w-3.5 h-3.5" />
+                    <span>AI Agent Key</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyText("agent-addr", agentAddress)}
+                    className="text-slate-400 hover:text-blue-600 cursor-pointer"
+                    title="Copy Agent Address"
+                  >
+                    {copiedId === "agent-addr" ? (
+                      <span className="text-[10px] text-emerald-600 font-bold">Copied! ✓</span>
+                    ) : (
+                      <CopyIcon className="w-3.5 h-3.5" />
+                    )}
+                  </button>
                 </div>
                 <div className="text-blue-600 font-semibold truncate mt-0.5">{agentAddress}</div>
                 <div className="text-[10px] text-amber-600 mt-0.5">Permissions: payService() ONLY (Restricted)</div>
@@ -168,14 +214,18 @@ export default function ContractGuardView({
           <div>
             <div className="flex items-center justify-between gap-2 mb-3">
               <span className="font-bold text-slate-800 text-sm">Budget Invariant</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full neu-inset-sm text-red-600 font-mono-code font-bold">
-                Hard Revert
+              <span className={`text-[10px] px-2 py-0.5 rounded-full neu-inset-sm font-mono-code font-bold ${
+                isDrained ? "text-amber-600" : "text-red-600"
+              }`}>
+                {isDrained ? "DRAINED" : "Hard Revert"}
               </span>
             </div>
             <div className="space-y-2 font-mono-code text-xs">
               <div className="flex justify-between text-slate-600">
                 <span>Vault Balance:</span>
-                <span className="font-bold text-slate-900">{vaultBalanceEth} ETH (~{ethToUsd(vaultBalanceEth, ethPriceUsd)})</span>
+                <span className={`font-bold ${isDrained ? "text-red-600" : "text-slate-900"}`}>
+                  {vaultBalanceEth} ETH (~{ethToUsd(vaultBalanceEth, ethPriceUsd)})
+                </span>
               </div>
               <div className="flex justify-between text-slate-600">
                 <span>Spend Limit:</span>

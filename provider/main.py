@@ -9,10 +9,20 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from web3 import Web3
 
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI(
     title="HTTP 402 Mock Compute Provider",
     description="Deterministic machine payments provider implementing HTTP 402 with idempotency and on-chain verification.",
     version="1.0.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # ---------------------------------------------------------------------------
@@ -216,10 +226,13 @@ async def compute_service(
 # Health & Inspection Endpoint
 # ---------------------------------------------------------------------------
 
+@app.get("/")
+@app.get("/health")
 @app.get("/api/v1/health")
 def health_check():
     return {
         "status": "online",
+        "service": "Agent SafePay HTTP 402 Compute Provider",
         "providerWallet": PROVIDER_WALLET,
         "totalInvoices": len(invoices_db),
         "fulfilledInvoices": sum(1 for inv in invoices_db.values() if inv.get("status") == "FULFILLED"),
