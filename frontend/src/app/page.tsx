@@ -308,6 +308,11 @@ export default function Home() {
       if (localStorage.getItem("vault_emergency_withdrawn") === "true") {
         setIsEmergencyWithdrawn(true);
         setVaultBalanceEth("0.0000");
+      } else {
+        const savedCustomBal = localStorage.getItem("user_custom_balance");
+        if (savedCustomBal) {
+          setVaultBalanceEth(parseFloat(savedCustomBal).toFixed(4));
+        }
       }
       const savedUser = localStorage.getItem("agent_safepay_user");
       if (savedUser) {
@@ -319,7 +324,7 @@ export default function Home() {
 
     async function loadContractData() {
       // Do not overwrite drained balance if emergency withdrawn
-      if (localStorage.getItem("vault_emergency_withdrawn") === "true") {
+      if (typeof window !== "undefined" && localStorage.getItem("vault_emergency_withdrawn") === "true") {
         setVaultBalanceEth("0.0000");
         return;
       }
@@ -330,8 +335,13 @@ export default function Home() {
           setVaultBalanceEth("0.0000");
           setIsEmergencyWithdrawn(true);
         } else {
-          const balance = await publicClient.getBalance({ address: VAULT_ADDRESS });
-          setVaultBalanceEth(parseFloat(formatEther(balance)).toFixed(4));
+          const customBal = typeof window !== "undefined" ? localStorage.getItem("user_custom_balance") : null;
+          if (customBal) {
+            setVaultBalanceEth(parseFloat(customBal).toFixed(4));
+          } else {
+            const balance = await publicClient.getBalance({ address: VAULT_ADDRESS });
+            setVaultBalanceEth(parseFloat(formatEther(balance)).toFixed(4));
+          }
         }
 
         const limit = (await publicClient.readContract({
@@ -566,7 +576,13 @@ export default function Home() {
     if (typeof window !== "undefined") {
       localStorage.removeItem("vault_emergency_withdrawn");
     }
-    setVaultBalanceEth("0.8500");
+    const targetBal =
+      typeof window !== "undefined" && localStorage.getItem("user_custom_balance")
+        ? parseFloat(localStorage.getItem("user_custom_balance")!).toFixed(4)
+        : userSession?.initialBalanceEth
+        ? parseFloat(userSession.initialBalanceEth).toFixed(4)
+        : "1.0000";
+    setVaultBalanceEth(targetBal);
     const now = new Date().toISOString().substring(11, 19);
     setLogs((prev) => [
       ...prev,
@@ -575,7 +591,7 @@ export default function Home() {
         time: now,
         content: (
           <span className="text-emerald-400 font-bold">
-            [VAULT RE-FUNDED] Collateral restored to 0.8500 ETH. Guard operational.
+            [VAULT RE-FUNDED] Collateral restored to {targetBal} ETH. Guard operational.
           </span>
         ),
       },
@@ -681,10 +697,13 @@ export default function Home() {
     ]);
   };
 
-  const handleLoginSuccess = (user: UserSession) => {
-    setUserSession(user);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("agent_safepay_user", JSON.stringify(user));
+  const handleClearLedger = async () => {
+    setLedgerRows([]);
+    setTotalSpentEth("0.0000");
+    try {
+      await fetch("/api/transactions", { method: "DELETE" });
+    } catch (e) {
+      console.error("Failed to delete transactions:", e);
     }
     const now = new Date().toISOString().substring(11, 19);
     setLogs((prev) => [
@@ -693,8 +712,94 @@ export default function Home() {
         num: (prev.length + 1).toString().padStart(2, "0"),
         time: now,
         content: (
+          <span className="text-amber-400 font-bold">
+            🧹 [LEDGER WIPED] Audit history cleared to 0 records. Total spend reset to 0.0000 ETH for live test demo.
+          </span>
+        ),
+      },
+    ]);
+  };
+
+  const handleAdjustBalance = async (newBalanceEth: string, clearLedger: boolean) => {
+    const formatted = parseFloat(newBalanceEth).toFixed(4);
+    setVaultBalanceEth(formatted);
+    setIsEmergencyWithdrawn(false);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("user_custom_balance", formatted);
+      localStorage.removeItem("vault_emergency_withdrawn");
+    }
+
+    if (clearLedger) {
+      await handleClearLedger();
+    }
+
+    const now = new Date().toISOString().substring(11, 19);
+    setLogs((prev) => [
+      ...prev,
+      {
+        num: (prev.length + 1).toString().padStart(2, "0"),
+        time: now,
+        content: (
           <span className="text-cyan-300 font-bold">
-            👤 [JUDGE SESSION INITIALIZED] Authenticated as {user.username} ({user.role}). Fresh workspace active.
+            ⚙️ [JUDGE VAULT VALUATION] Total Vault Balance set to {formatted} ETH (~${ethToUsd(parseFloat(formatted), ethPriceUsd)} USD).
+          </span>
+        ),
+      },
+    ]);
+  };
+
+  const handleLoginSuccess = async (user: UserSession) => {
+    setUserSession(user);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("agent_safepay_user", JSON.stringify(user));
+      localStorage.removeItem("vault_emergency_withdrawn");
+    }
+    setIsEmergencyWithdrawn(false);
+
+    // Apply custom balance from account creation
+    const initialBal = user.initialBalanceEth ? parseFloat(user.initialBalanceEth).toFixed(4) : "1.0000";
+    setVaultBalanceEth(initialBal);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("user_custom_balance", initialBal);
+    }
+
+    // Clean slate: completely clear transactions and reset spend
+    setLedgerRows([]);
+    setTotalSpentEth("0.0000");
+
+    try {
+      await fetch("/api/transactions", { method: "DELETE" });
+    } catch (e) {
+      console.error("Failed to delete transactions on login:", e);
+    }
+
+    const now = new Date().toISOString().substring(11, 19);
+    setLogs((prev) => [
+      ...prev,
+      {
+        num: (prev.length + 1).toString().padStart(2, "0"),
+        time: now,
+        content: (
+          <span className="text-cyan-300 font-bold">
+            👤 [JUDGE SESSION INITIALIZED] Authenticated as {user.username} ({user.role}).
+          </span>
+        ),
+      },
+      {
+        num: (prev.length + 2).toString().padStart(2, "0"),
+        time: now,
+        content: (
+          <span className="text-emerald-400 font-semibold">
+            ✨ [CLEAN SLATE GUARANTEE] All transaction history purged (0 records). Ready for live test payments.
+          </span>
+        ),
+      },
+      {
+        num: (prev.length + 3).toString().padStart(2, "0"),
+        time: now,
+        content: (
+          <span className="text-blue-300 font-mono-code">
+            💰 [VAULT VALUATION SET] Initial balance locked at {initialBal} ETH (~${ethToUsd(parseFloat(initialBal), ethPriceUsd)} USD).
           </span>
         ),
       },
@@ -705,6 +810,7 @@ export default function Home() {
     setUserSession(null);
     if (typeof window !== "undefined") {
       localStorage.removeItem("agent_safepay_user");
+      localStorage.removeItem("user_custom_balance");
     }
   };
 
@@ -729,6 +835,14 @@ export default function Home() {
     const currentSpent = parseFloat(totalSpentEth) || 0;
     const newSpent = (currentSpent + 0.001).toFixed(4);
     setTotalSpentEth(newSpent);
+
+    // Deduct live vault balance
+    const currentBal = parseFloat(vaultBalanceEth) || 0;
+    const newBal = Math.max(0, currentBal - 0.001).toFixed(4);
+    setVaultBalanceEth(newBal);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("user_custom_balance", newBal);
+    }
 
     // Append to live ledger
     const newTx: AuditLog = {
@@ -864,9 +978,16 @@ export default function Home() {
         const contentHash = data.deliverable?.contentHash || "0xabc...";
         const costUsd = ethToUsd(0.001, ethPriceUsd);
 
-        // Increment spend
+        // Increment spend and deduct live vault balance
         const currentSpent = parseFloat(totalSpentEth) || 0;
         setTotalSpentEth((currentSpent + 0.001).toFixed(4));
+
+        const currentBal = parseFloat(vaultBalanceEth) || 0;
+        const newBal = Math.max(0, currentBal - 0.001).toFixed(4);
+        setVaultBalanceEth(newBal);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("user_custom_balance", newBal);
+        }
 
         // Add to ledger
         const newRecord: AuditLog = {
@@ -1331,6 +1452,8 @@ export default function Home() {
               onOpenZombieModal={() => setIsZombieModalOpen(true)}
               idempotencyBadge={idempotencyBadge}
               onResetVault={handleResetVault}
+              onAdjustBalance={handleAdjustBalance}
+              onClearLedger={handleClearLedger}
             />
           )}
 

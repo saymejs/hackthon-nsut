@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchTransactions, addTransaction, isNeonConfigured } from "@/lib/db";
+import { fetchTransactions, addTransaction, clearTransactions, isNeonConfigured } from "@/lib/db";
 
 export async function GET() {
   try {
@@ -40,6 +40,19 @@ export async function POST(req: NextRequest) {
       success: true,
       database: isNeonConfigured ? "Neon Serverless Postgres" : "Local Standby Memory Store",
       transaction: newTx,
+    });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  }
+}
+
+export async function DELETE() {
+  try {
+    await clearTransactions();
+    return NextResponse.json({
+      success: true,
+      database: isNeonConfigured ? "Neon Serverless Postgres" : "Local Standby Memory Store",
+      message: "Transaction history cleared successfully for new judge session",
     });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });

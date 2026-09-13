@@ -10,6 +10,7 @@ export interface UserSession {
   username: string;
   role: string;
   walletAddress: string;
+  initialBalanceEth?: string;
 }
 
 interface AuthModalProps {
@@ -25,6 +26,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("Hackathon Judge");
   const [walletAddress, setWalletAddress] = useState("");
+  const [initialBalanceEth, setInitialBalanceEth] = useState("0.8500");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,6 +48,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
             password: password || "secure_judge_2026",
             role,
             walletAddress: walletAddress.trim() || undefined,
+            initialBalanceEth: initialBalanceEth.trim() || "0.8500",
           }),
         });
         const data = await res.json();
@@ -57,6 +60,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
           username: data.user.username,
           role: data.user.role,
           walletAddress: data.wallet?.walletAddress || "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          initialBalanceEth: data.wallet?.balanceEth || initialBalanceEth || "0.8500",
         });
         onClose();
       } else {
@@ -91,6 +95,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
       username: "Lead Evaluator",
       role: "Hackathon Judge",
       walletAddress: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      initialBalanceEth: initialBalanceEth || "1.0000",
     });
     onClose();
   };
@@ -209,6 +214,51 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
                 </select>
               </div>
 
+              {/* Starting Vault / Wallet Balance Selection */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Starting Vault &amp; Wallet Balance (ETH)
+                  </label>
+                  <span className="text-[11px] font-mono-code text-blue-600 font-bold">
+                    ≈ ${((parseFloat(initialBalanceEth) || 0) * 2500).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                  </span>
+                </div>
+
+                {/* Preset Chips */}
+                <div className="grid grid-cols-4 gap-1.5 mb-2">
+                  {["0.2500", "0.5000", "1.0000", "2.5000"].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setInitialBalanceEth(preset)}
+                      className={`py-1.5 rounded-xl text-xs font-mono-code font-bold transition-all cursor-pointer ${
+                        initialBalanceEth === preset
+                          ? "bg-slate-800 text-white shadow-sm"
+                          : "neu-raised-xs hover:neu-inset text-slate-700"
+                      }`}
+                    >
+                      {parseFloat(preset)} ETH
+                    </button>
+                  ))}
+                </div>
+
+                <div className="relative">
+                  <input
+                    type="number"
+                    step="0.0001"
+                    min="0.0001"
+                    placeholder="0.8500"
+                    value={initialBalanceEth}
+                    onChange={(e) => setInitialBalanceEth(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl neu-inset text-xs font-mono-code text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                  />
+                  <span className="absolute right-3.5 top-2.5 text-xs font-bold text-slate-400 font-mono-code">
+                    ETH
+                  </span>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-1">
                   Linked EVM Wallet Address <span className="text-slate-400 font-normal">(Optional)</span>
@@ -221,6 +271,14 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
                   className="w-full px-4 py-2.5 rounded-xl neu-inset text-xs font-mono-code text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-400"
                 />
               </div>
+
+              {/* Clean Slate Live Testing Guarantee Banner */}
+              <div className="p-3 rounded-2xl neu-inset-sm flex items-start gap-2 text-slate-600 bg-[#e4e8ef]">
+                <span className="text-emerald-600 font-bold text-sm">✨</span>
+                <p className="text-[11px] leading-tight">
+                  <strong className="text-slate-800">Clean Slate Guarantee:</strong> Registering clears all prior transaction history and sets the ledger to 0 records so you can run live test payments.
+                </p>
+              </div>
             </>
           )}
 
@@ -229,7 +287,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
             disabled={loading}
             className="w-full py-3 rounded-full neu-btn-primary font-bold text-xs tracking-wide cursor-pointer disabled:opacity-50 mt-2"
           >
-            {loading ? "Processing..." : tab === "signup" ? "Create Account & Start Session" : "Sign In to Dashboard"}
+            {loading ? "Processing..." : tab === "signup" ? "Create Account & Start Fresh Session" : "Sign In to Dashboard"}
           </button>
         </form>
 

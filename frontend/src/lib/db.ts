@@ -242,6 +242,22 @@ export async function addTransaction(tx: Omit<DbTransaction, "id">): Promise<DbT
   return newRecord;
 }
 
+export async function clearTransactions(): Promise<void> {
+  memoryTransactions = [];
+  if (globalStore.__memoryTransactions) {
+    globalStore.__memoryTransactions = [];
+  }
+
+  const sql = getDbClient();
+  if (sql) {
+    try {
+      await sql`DELETE FROM transactions`;
+    } catch (err) {
+      console.warn("Neon clearTransactions fallback:", err);
+    }
+  }
+}
+
 export async function fetchPolicies(): Promise<DbPolicy> {
   const sql = getDbClient();
   if (sql) {
@@ -383,6 +399,7 @@ export async function createUser(data: {
   passwordHash?: string;
   role?: string;
   walletAddress?: string;
+  initialBalanceEth?: string;
 }): Promise<{ user: DbUser; wallet: DbWallet }> {
   const sql = getDbClient();
   const role = data.role || "judge";
@@ -390,6 +407,14 @@ export async function createUser(data: {
     data.walletAddress && data.walletAddress.startsWith("0x") && data.walletAddress.length === 42
       ? data.walletAddress
       : `0x${Array.from({ length: 40 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`;
+
+  const balanceEth =
+    data.initialBalanceEth && !isNaN(parseFloat(data.initialBalanceEth))
+      ? parseFloat(data.initialBalanceEth).toFixed(4)
+      : "0.8500";
+
+  // When a new account is created, clear all prior transaction history so the judge has a clean slate for live testing
+  await clearTransactions();
 
   if (sql) {
     try {
@@ -402,7 +427,7 @@ export async function createUser(data: {
 
       const walletRows = await sql`
         INSERT INTO wallets (user_id, wallet_address, chain_id, balance_eth, is_primary)
-        VALUES (${newUser.id}, ${defaultWallet}, 31337, '0.8500', TRUE)
+        VALUES (${newUser.id}, ${defaultWallet}, 31337, ${balanceEth}, TRUE)
         RETURNING id, user_id AS "userId", wallet_address AS "walletAddress", chain_id AS "chainId", balance_eth AS "balanceEth", is_primary AS "isPrimary", created_at AS "createdAt"
       `;
       const newWallet = (walletRows as any[])[0] as DbWallet;
@@ -427,13 +452,34 @@ export async function createUser(data: {
     userId: newUser.id,
     walletAddress: defaultWallet,
     chainId: 31337,
-    balanceEth: "0.8500",
+    balanceEth,
     isPrimary: true,
     createdAt: new Date().toISOString(),
   };
   memoryWallets.push(newWallet);
 
   return { user: newUser, wallet: newWallet };
+}
+
+export async function updateWalletBalance(walletAddress: string, newBalanceEth: string): Promise<void> {
+  const formatted = parseFloat(newBalanceEth).toFixed(4);
+  const sql = getDbClient();
+  if (sql) {
+    try {
+      await sql`
+        UPDATE wallets
+        SET balance_eth = ${formatted}
+        WHERE LOWER(wallet_address) = LOWER(${walletAddress})
+      `;
+    } catch (err) {
+      console.warn("Neon updateWalletBalance fallback:", err);
+    }
+  }
+
+  const found = memoryWallets.find((w) => w.walletAddress.toLowerCase() === walletAddress.toLowerCase());
+  if (found) {
+    found.balanceEth = formatted;
+  }
 }
 
 export async function findUserByEmail(email: string): Promise<DbUser | null> {
@@ -571,17 +617,5 @@ export async function triggerZombieLockout(): Promise<{ lockedCount: number; sub
   }
 
   return { lockedCount: memorySubAgents.length, subAgents: memorySubAgents };
-}
-
-export async function clearTransactions(): Promise<void> {
-  memoryTransactions = [];
-  const sql = getDbClient();
-  if (sql) {
-    try {
-      await sql`DELETE FROM transactions`;
-    } catch (err) {
-      console.warn("Neon clearTransactions fallback:", err);
-    }
-  }
 }
 

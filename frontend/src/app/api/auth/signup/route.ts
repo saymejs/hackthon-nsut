@@ -4,7 +4,7 @@ import { createUser, findUserByEmail } from "@/lib/db";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { email, username, password, role, walletAddress } = body;
+    const { email, username, password, role, walletAddress, initialBalanceEth } = body;
 
     if (!email || !username) {
       return NextResponse.json(
@@ -27,13 +27,15 @@ export async function POST(req: NextRequest) {
       passwordHash: password || "judge_pass",
       role: role || "judge",
       walletAddress,
+      initialBalanceEth: initialBalanceEth || "0.8500",
     });
 
     return NextResponse.json({
       success: true,
       user,
       wallet,
-      message: "Judge / User account created successfully",
+      initialBalanceEth: wallet.balanceEth,
+      message: "Judge / User account created successfully with fresh ledger and configured balance",
     });
   } catch (err: any) {
     return NextResponse.json(

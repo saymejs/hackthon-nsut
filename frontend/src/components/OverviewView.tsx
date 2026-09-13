@@ -67,6 +67,8 @@ interface OverviewViewProps {
   onOpenZombieModal?: () => void;
   idempotencyBadge?: string | null;
   onResetVault?: () => void;
+  onAdjustBalance?: (newBalance: string, clearLedger: boolean) => void;
+  onClearLedger?: () => void;
 }
 
 export default function OverviewView({
@@ -99,7 +101,13 @@ export default function OverviewView({
   onOpenZombieModal,
   idempotencyBadge,
   onResetVault,
+  onAdjustBalance,
+  onClearLedger,
 }: OverviewViewProps) {
+  const [showAdjustModal, setShowAdjustModal] = useState(false);
+  const [customBalanceInput, setCustomBalanceInput] = useState(vaultBalanceEth || "0.8500");
+  const [clearLedgerChecked, setClearLedgerChecked] = useState(true);
+
   // Compute percentage calculations
   const limitNum = parseFloat(spendLimitEth) || 0.05;
   const spentNum = parseFloat(totalSpentEth) || 0.003;
@@ -180,13 +188,28 @@ export default function OverviewView({
                 {isDrained ? "DRAINED / WITHDRAWN" : "Contract Holding"}
               </span>
             </div>
-            <div className="flex items-baseline gap-2 mt-2">
-              <span className={`text-4xl font-extrabold font-mono-code tracking-tight ${
-                isDrained ? "text-red-600" : "text-slate-900"
-              }`}>
-                {vaultBalanceEth}
-              </span>
-              <span className="text-xl font-bold font-mono-code text-blue-600">ETH</span>
+            <div className="flex items-baseline justify-between gap-2 mt-2">
+              <div className="flex items-baseline gap-2">
+                <span className={`text-4xl font-extrabold font-mono-code tracking-tight ${
+                  isDrained ? "text-red-600" : "text-slate-900"
+                }`}>
+                  {vaultBalanceEth}
+                </span>
+                <span className="text-xl font-bold font-mono-code text-blue-600">ETH</span>
+              </div>
+              {onAdjustBalance && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCustomBalanceInput(vaultBalanceEth);
+                    setShowAdjustModal(true);
+                  }}
+                  className="px-2.5 py-1 rounded-full neu-raised-xs hover:neu-inset text-[11px] font-bold text-blue-600 border border-blue-200 cursor-pointer flex items-center gap-1 transition-all"
+                  title="Configure starting vault balance or re-fund"
+                >
+                  <span>⚙️ Set Value</span>
+                </button>
+              )}
             </div>
             <div className="mt-2 font-mono-code text-xs text-slate-500 flex items-center gap-2">
               <span className="font-semibold text-slate-800">
@@ -425,6 +448,16 @@ export default function OverviewView({
                 <span className="text-[10px] px-2.5 py-1 rounded-full neu-inset-sm text-blue-600 font-bold font-mono-code">
                   {ledgerRows.length} Records
                 </span>
+                {ledgerRows.length > 0 && onClearLedger && (
+                  <button
+                    type="button"
+                    onClick={onClearLedger}
+                    className="text-[10px] px-2.5 py-1 rounded-full neu-raised-xs hover:neu-inset text-amber-700 hover:text-red-700 font-bold font-mono-code transition-all cursor-pointer border border-amber-300 flex items-center gap-1"
+                    title="Clear transaction history for a fresh live demo"
+                  >
+                    <span>🧹 Clear Ledger</span>
+                  </button>
+                )}
               </div>
               <p className="text-xs text-slate-500 mt-1">
                 Cryptographic payment attestations stored on Arbitrum nitro memory &amp; Neon DB
@@ -675,6 +708,120 @@ export default function OverviewView({
           </div>
         )}
       </div>
+
+      {/* Adjust Vault Balance & Reset Ledger Modal for Judges */}
+      {showAdjustModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md bg-[#e8ecf2] rounded-3xl p-6 neu-raised border border-slate-300 shadow-2xl relative">
+            <button
+              onClick={() => setShowAdjustModal(false)}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full neu-raised-xs hover:neu-inset flex items-center justify-center text-slate-500 font-bold text-sm cursor-pointer"
+            >
+              ✕
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-2xl neu-raised-xs flex items-center justify-center p-1.5 bg-[#e8ecf2]">
+                <Logo variant="vault" className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-800 tracking-tight">
+                  Configure Judge Vault Value
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Set live collateral balance &amp; prepare clean ledger for testing
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Vault Collateral Balance (ETH)
+                  </label>
+                  <span className="text-xs font-mono-code text-blue-600 font-bold">
+                    ≈ ${((parseFloat(customBalanceInput) || 0) * ethPriceUsd).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                  </span>
+                </div>
+
+                {/* Preset Chips */}
+                <div className="grid grid-cols-4 gap-1.5 mb-2.5">
+                  {["0.2500", "0.5000", "1.0000", "2.5000"].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setCustomBalanceInput(preset)}
+                      className={`py-1.5 rounded-xl text-xs font-mono-code font-bold transition-all cursor-pointer ${
+                        customBalanceInput === preset
+                          ? "bg-slate-800 text-white shadow-sm"
+                          : "neu-raised-xs hover:neu-inset text-slate-700"
+                      }`}
+                    >
+                      {parseFloat(preset)} ETH
+                    </button>
+                  ))}
+                </div>
+
+                <div className="relative">
+                  <input
+                    type="number"
+                    step="0.0001"
+                    min="0.0001"
+                    placeholder="0.8500"
+                    value={customBalanceInput}
+                    onChange={(e) => setCustomBalanceInput(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl neu-inset text-sm font-mono-code text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                  />
+                  <span className="absolute right-3.5 top-2.5 text-xs font-bold text-slate-400 font-mono-code">
+                    ETH
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-2xl neu-inset-sm flex items-center justify-between bg-[#e4e8ef]">
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-slate-800">Clear Transaction History</span>
+                  <span className="text-[10px] text-slate-500">Reset audit records &amp; spend counter for live demo</span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={clearLedgerChecked}
+                  onChange={(e) => setClearLedgerChecked(e.target.checked)}
+                  className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAdjustModal(false)}
+                  className="px-4 py-2 rounded-2xl neu-btn text-xs font-bold text-slate-600 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const val = parseFloat(customBalanceInput);
+                    if (isNaN(val) || val <= 0) {
+                      alert("Please enter a valid ETH amount");
+                      return;
+                    }
+                    if (onAdjustBalance) {
+                      onAdjustBalance(val.toFixed(4), clearLedgerChecked);
+                    }
+                    setShowAdjustModal(false);
+                  }}
+                  className="px-5 py-2 rounded-2xl neu-btn-primary text-xs font-bold text-white cursor-pointer"
+                >
+                  Apply Value &amp; Ready Live Test
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
