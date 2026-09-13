@@ -391,7 +391,7 @@ export default function Home() {
               <img
                 alt="Agent SafePay Vault Logo"
                 className="h-7 w-auto object-contain"
-                src="https://lh3.googleusercontent.com/aida/AEtjO1XbyhoPpLcHjuGoYWzWlRnyBt4F83Ho_djkuUvLXbjG5lg57q0BrLlA02CUUs5W9etQOxneB1_T0wLFCTmW-ODT7MpG3Msa91dbNRk_OfVgQ_e8Dhn-UzSKl04DD3m48JKMqwFfP9x4PKebQ08UCra7w_3TXoIk2NK3tUKXMOZ5eAhwRPSJbLOUZzziOHQ2l0DilqHTWnZQrxQIdU1qd4WPJ7-M97aChZtgET1RWqeO8QNHeG-uu1iJlBs"
+                src="/logo.png"
               />
             </div>
             <div className="flex flex-col">
