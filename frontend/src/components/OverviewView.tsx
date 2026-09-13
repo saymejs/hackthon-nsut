@@ -522,102 +522,99 @@ export default function OverviewView({
           </div>
         </div>
 
-        {/* Buttons Row with Neumorphic Tactile Pill Styles */}
-        <div className="flex flex-wrap items-center gap-4">
-          {/* Trigger Standard Purchase Button */}
+        {/* Buttons Grid with Neumorphic Tactile Pill Styles */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5">
+          {/* 1. Trigger Standard Purchase Button */}
           <button
             type="button"
-            className="flex items-center gap-2 px-6 py-3.5 rounded-full neu-btn-primary font-bold text-sm cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl neu-btn-primary font-bold text-xs cursor-pointer shadow-sm transition-all"
             id="btn-standard-purchase"
             onClick={triggerNormalPurchase}
           >
-            <PlayIcon className="w-4 h-4" />
-            <span>Trigger Standard Purchase (0.001 ETH / ~$2.50)</span>
+            <PlayIcon className="w-4 h-4 shrink-0" />
+            <span className="truncate">Standard Purchase (0.001 ETH)</span>
           </button>
 
-          {/* Trigger AI Autonomous Agent Run */}
+          {/* 2. Trigger AI Autonomous Agent Run */}
           {triggerAgentRun && (
             <button
               type="button"
-              className="flex items-center gap-2 px-6 py-3.5 rounded-full neu-btn font-bold text-sm text-cyan-600 cursor-pointer disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl neu-btn font-bold text-xs text-cyan-700 cursor-pointer disabled:opacity-50 hover:neu-inset transition-all"
               id="btn-agent-run"
               onClick={triggerAgentRun}
               disabled={isAgentRunning}
             >
-              <BoltIcon className={`w-4 h-4 text-cyan-500 ${isAgentRunning ? "animate-spin" : ""}`} />
-              <span>{isAgentRunning ? "Running Agent..." : "Run AI Agent (Gemini / Cognitive)"}</span>
+              <BoltIcon className={`w-4 h-4 text-cyan-600 shrink-0 ${isAgentRunning ? "animate-spin" : ""}`} />
+              <span className="truncate">{isAgentRunning ? "Running Agent..." : "Run AI Agent (Gemini 3.6)"}</span>
             </button>
           )}
 
-          {/* Simulate Overspend Attack Button */}
+          {/* 3. Simulate Overspend Attack Button */}
           <button
             type="button"
-            className="flex items-center gap-2 px-6 py-3.5 rounded-full neu-btn-danger font-bold text-sm cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl neu-btn-danger font-bold text-xs cursor-pointer hover:neu-inset transition-all"
             id="btn-attack-sim"
             onClick={triggerAttackSimulation}
           >
-            <AlertTriangleIcon className="w-4 h-4" />
-            <span>Simulate Overspend Attack (Attempt 0.1 ETH / ~$250.00)</span>
+            <AlertTriangleIcon className="w-4 h-4 shrink-0 text-red-600" />
+            <span className="truncate">Simulate Overspend Attack</span>
           </button>
 
-          {/* Wi-Fi Disconnection & Anti-Double-Charge Idempotency Replay Button */}
+          {/* 4. Wi-Fi Disconnection & Anti-Double-Charge Idempotency Replay Button */}
           {triggerIdempotencyReplay && (
             <button
               type="button"
-              className="flex items-center gap-2 px-6 py-3.5 rounded-full neu-btn font-bold text-sm text-cyan-700 cursor-pointer hover:neu-inset border border-cyan-300"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl neu-btn font-bold text-xs text-cyan-800 cursor-pointer hover:neu-inset border border-cyan-300 transition-all"
               id="btn-wifi-replay"
               onClick={triggerIdempotencyReplay}
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-cyan-500">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-cyan-600 shrink-0">
                 <path d="M5 12.55a11 11 0 0 1 14.08 0" />
                 <path d="M1.42 9a16 16 0 0 1 21.16 0" />
                 <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
                 <line x1="12" y1="20" x2="12.01" y2="20" />
               </svg>
-              <span>Simulate Connection Drop &amp; Replay (Idempotency)</span>
+              <span className="truncate">Simulate Wi-Fi Replay (0 ETH)</span>
             </button>
           )}
 
-          {/* Zombie Agent Defense & Time-Decaying Budget Button */}
+          {/* 5. Zombie Agent Defense & Time-Decaying Budget Button */}
           {onOpenZombieModal && (
             <button
               type="button"
-              className="flex items-center gap-2 px-6 py-3.5 rounded-full neu-btn font-bold text-sm text-indigo-700 cursor-pointer hover:neu-inset border border-indigo-200"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl neu-btn font-bold text-xs text-indigo-700 cursor-pointer hover:neu-inset border border-indigo-200 transition-all"
               id="btn-zombie-defense"
               onClick={onOpenZombieModal}
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 text-indigo-600">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 text-indigo-600 shrink-0">
                 <circle cx="12" cy="12" r="10" />
                 <polyline points="12 6 12 12 16 14" />
               </svg>
-              <span>Zombie Agent Defense (Time-Decay)</span>
+              <span className="truncate">Zombie Agent Defense (TTLs)</span>
             </button>
           )}
 
-          {/* Emergency Withdrawal Shortcut Button */}
-          {onEmergencyWithdraw && !isDrained && (
+          {/* 6. Emergency Withdrawal Shortcut Button or Reset */}
+          {isDrained && onResetVault ? (
             <button
               type="button"
-              className="flex items-center gap-2 px-5 py-3 rounded-full neu-raised-xs hover:neu-inset text-amber-700 font-bold text-xs cursor-pointer border border-amber-300 ml-auto"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl neu-btn-primary font-bold text-xs cursor-pointer shadow-sm transition-all"
+              onClick={onResetVault}
+            >
+              <CheckCircleIcon className="w-4 h-4 text-emerald-300 shrink-0" />
+              <span className="truncate">Re-fund Collateral &amp; Reset</span>
+            </button>
+          ) : onEmergencyWithdraw ? (
+            <button
+              type="button"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl neu-raised-xs hover:neu-inset text-amber-700 font-bold text-xs cursor-pointer border border-amber-300 transition-all"
               onClick={onEmergencyWithdraw}
               disabled={isWithdrawPending}
             >
-              <WarningIcon className="w-3.5 h-3.5 text-amber-600" />
-              <span>{isWithdrawPending ? "Withdrawing..." : "Emergency Vault Withdrawal"}</span>
+              <WarningIcon className="w-4 h-4 text-amber-600 shrink-0" />
+              <span className="truncate">{isWithdrawPending ? "Withdrawing..." : "Emergency Vault Withdrawal"}</span>
             </button>
-          )}
-
-          {/* Re-fund Collateral Button if Vault is Drained */}
-          {isDrained && onResetVault && (
-            <button
-              type="button"
-              className="flex items-center gap-2 px-5 py-3 rounded-full neu-btn-primary font-bold text-xs cursor-pointer ml-auto"
-              onClick={onResetVault}
-            >
-              <CheckCircleIcon className="w-3.5 h-3.5 text-emerald-300" />
-              <span>Re-fund Collateral &amp; Reset Vault</span>
-            </button>
-          )}
+          ) : null}
         </div>
 
         {/* Idempotency / Double Charge Protection Notification */}

@@ -975,88 +975,88 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#e8ecf2] text-slate-800 font-sans antialiased select-none">
-      {/* GLOBAL TOP NAVIGATION BAR */}
-      <header className="fixed top-0 left-0 right-0 h-16 bg-[#e8ecf2] border-b border-[#d8e0eb] z-50 flex items-center px-6">
-        <div className="flex items-center justify-between w-full">
+      {/* TOP HEADER */}
+      <header className="fixed top-0 left-0 right-0 h-16 bg-[#e8ecf2] border-b border-[#d8e0eb] z-50 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+        <div className="flex items-center justify-between w-full gap-2">
           {/* Left Brand Identity */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl neu-raised-xs flex items-center justify-center p-1.5 bg-[#e8ecf2]">
-              <Logo variant="vault" className="w-7 h-7" />
+          <div className="flex items-center gap-2.5 shrink-0">
+            <div className="w-9 h-9 rounded-2xl neu-raised-xs flex items-center justify-center p-1.5 bg-[#e8ecf2]">
+              <Logo variant="vault" className="w-6 h-6" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-base tracking-tight text-slate-900">
+              <div className="flex items-center gap-1.5">
+                <span className="font-extrabold text-sm sm:text-base tracking-tight text-slate-900">
                   Agent SafePay
                 </span>
-                <span className="text-[10px] font-mono-code font-bold px-2 py-0.5 rounded-full neu-inset-sm text-blue-600">
+                <span className="text-[10px] font-mono-code font-bold px-1.5 py-0.5 rounded-full neu-inset-sm text-blue-600">
                   W3A-1
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 font-medium">
+              <p className="text-[10px] text-slate-500 font-medium hidden 2xl:block">
                 Deterministic Machine Payments with On-Chain Budget Protection
+              </p>
+              <p className="text-[10px] text-slate-500 font-medium hidden sm:block 2xl:hidden">
+                Machine Payments Vault Guard
               </p>
             </div>
           </div>
 
           {/* Center Protocol Badges & Neon DB Status */}
-          <div className="hidden lg:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-2">
             {/* Neon DB Status Indicator */}
             <button
               type="button"
               onClick={() => setShowDbModal(true)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full neu-raised-xs hover:neu-inset transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full neu-raised-xs hover:neu-inset transition-all cursor-pointer"
               title="Click to view Neon PostgreSQL tables & schema"
             >
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="text-xs font-mono-code font-bold text-slate-700">
+              <span className="text-[11px] font-mono-code font-bold text-slate-700">
                 Neon DB: Operational
               </span>
             </button>
 
             {/* Arbitrum Nitro Latency Pill */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full neu-inset-sm">
+            <div className="hidden 2xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full neu-inset-sm">
               <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span className="font-mono-code text-xs text-slate-700 font-medium">
-                Arbitrum Nitro:
-              </span>
-              <span className="text-[11px] font-mono-code text-emerald-700 font-bold px-2 py-0.5 rounded-full neu-raised-xs bg-[#e8ecf2]">
-                18ms
+              <span className="font-mono-code text-[11px] text-slate-700">
+                Arbitrum: <strong className="text-emerald-700">18ms</strong>
               </span>
             </div>
 
             {/* ETH Live Oracle Price Pill */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full neu-inset-sm">
-              <TrendingUpIcon className="w-4 h-4 text-blue-600" />
-              <span className="font-mono-code text-xs text-slate-700 font-medium">
-                ETH Oracle: <strong className="text-slate-900 font-bold">${ethPriceUsd.toLocaleString()}</strong>
+            <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full neu-inset-sm">
+              <TrendingUpIcon className="w-3.5 h-3.5 text-blue-600" />
+              <span className="font-mono-code text-[11px] text-slate-700 font-medium">
+                ETH: <strong className="text-slate-900 font-bold">${ethPriceUsd.toLocaleString()}</strong>
               </span>
             </div>
 
             {/* Vault Active / Drained Pill */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full neu-raised-xs">
-              <span className="relative flex h-2.5 w-2.5">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full neu-raised-xs">
+              <span className="relative flex h-2 w-2">
                 <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${
                   parseFloat(vaultBalanceEth) <= 0 ? "bg-red-400" : "bg-emerald-400"
                 } opacity-75`}></span>
-                <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${
                   parseFloat(vaultBalanceEth) <= 0 ? "bg-red-500" : "bg-emerald-500"
                 }`}></span>
               </span>
-              <span className={`text-xs font-bold tracking-wider uppercase ${
+              <span className={`text-[10px] font-bold tracking-wider uppercase ${
                 parseFloat(vaultBalanceEth) <= 0 ? "text-red-600" : "text-emerald-600"
               }`}>
-                {parseFloat(vaultBalanceEth) <= 0 ? "Vault Drained" : "Vault Active"}
+                {parseFloat(vaultBalanceEth) <= 0 ? "Drained" : "Active"}
               </span>
             </div>
           </div>
 
           {/* Right Actions Section */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 shrink-0">
             {/* Owner Mode Status Badge */}
             {isOwner && (
-              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full neu-raised-xs border border-emerald-500/40 text-emerald-600 font-mono-code text-[11px] font-bold shadow-[0_0_12px_rgba(16,185,129,0.25)]">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span>OWNER MODE ACTIVE</span>
+              <div className="hidden 2xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full neu-raised-xs border border-emerald-500/40 text-emerald-600 font-mono-code text-[10px] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>OWNER</span>
               </div>
             )}
 
@@ -1065,63 +1065,61 @@ export default function Home() {
               <button
                 type="button"
                 onClick={handleSandboxConnect}
-                className={`px-3 py-1.5 rounded-full text-xs font-bold font-mono-code transition-all flex items-center gap-1.5 cursor-pointer ${
+                className={`px-2.5 py-1 rounded-full text-[11px] font-bold font-mono-code transition-all flex items-center gap-1 cursor-pointer ${
                   sandboxWalletAddress
                     ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
                     : "neu-raised-xs hover:neu-inset text-cyan-800 border border-cyan-300"
                 }`}
                 title="Connect Sandbox Judge Wallet (Account #1) with Owner authorization"
               >
-                <span>⚡ {sandboxWalletAddress ? "Judge Connected" : "Judge Sandbox Wallet"}</span>
+                <span>⚡ {sandboxWalletAddress ? "Connected" : "Judge Wallet"}</span>
               </button>
             )}
 
             {/* RainbowKit Real Web3 Wallet Connect Button */}
-            <div className="flex items-center neu-raised-xs rounded-2xl p-1 bg-[#e8ecf2]">
+            <div className="flex items-center neu-raised-xs rounded-2xl p-0.5 bg-[#e8ecf2]">
               <ConnectButton
                 showBalance={false}
                 accountStatus={{
                   smallScreen: "avatar",
-                  largeScreen: "full",
+                  largeScreen: "avatar",
                 }}
-                chainStatus={{
-                  smallScreen: "icon",
-                  largeScreen: "icon",
-                }}
+                chainStatus="none"
               />
             </div>
 
             {/* Emergency Withdraw Button */}
             <button
               type="button"
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
                 isOwner
-                  ? "neu-btn-danger text-red-600 ring-2 ring-red-400"
+                  ? "neu-btn-danger text-red-600 ring-1 ring-red-400"
                   : "neu-btn-danger text-red-600 opacity-90"
               }`}
               onClick={handleEmergencyWithdraw}
               disabled={isWithdrawPending}
               title={isOwner ? "Authorized: Withdraw all vault funds" : "Emergency Drain Vault Funds"}
             >
-              <WarningIcon className="w-4 h-4 text-red-600" />
-              <span>{isWithdrawPending ? "Withdrawing..." : "Emergency Withdraw"}</span>
+              <WarningIcon className="w-3.5 h-3.5 text-red-600" />
+              <span className="hidden sm:inline">{isWithdrawPending ? "Withdrawing..." : "Emergency Withdraw"}</span>
+              <span className="sm:hidden">Drain</span>
             </button>
 
             {/* User Profile / Judge Sign In */}
             {userSession ? (
-              <div className="flex items-center gap-2">
-                <div className="hidden md:flex flex-col text-right">
-                  <span className="text-xs font-bold text-slate-900 leading-tight">
+              <div className="flex items-center gap-1.5">
+                <div className="hidden lg:flex flex-col text-right">
+                  <span className="text-[11px] font-bold text-slate-900 leading-tight">
                     {userSession.username}
                   </span>
-                  <span className="text-[10px] text-cyan-700 font-mono-code leading-tight">
+                  <span className="text-[9px] text-cyan-700 font-mono-code leading-tight">
                     {userSession.role}
                   </span>
                 </div>
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="px-2.5 py-1 rounded-full neu-raised-xs hover:neu-inset text-[10px] font-bold text-slate-600 cursor-pointer"
+                  className="px-2 py-0.5 rounded-full neu-raised-xs hover:neu-inset text-[10px] font-bold text-slate-600 cursor-pointer"
                   title="Sign out of Judge Session"
                 >
                   Sign Out
@@ -1131,10 +1129,10 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => setIsAuthModalOpen(true)}
-                className="px-3.5 py-1.5 rounded-full neu-raised-xs hover:neu-inset text-xs font-bold text-cyan-800 border border-cyan-300 cursor-pointer flex items-center gap-1.5"
+                className="px-2.5 py-1 rounded-full neu-raised-xs hover:neu-inset text-[11px] font-bold text-cyan-800 border border-cyan-300 cursor-pointer flex items-center gap-1"
                 title="Create or sign in to judge profile"
               >
-                <PersonIcon className="w-4 h-4 text-cyan-600" />
+                <PersonIcon className="w-3.5 h-3.5 text-cyan-600" />
                 <span>Judge Login</span>
               </button>
             )}
@@ -1143,7 +1141,7 @@ export default function Home() {
       </header>
 
       {/* SIDEBAR NAVIGATION (COMMAND BAYS) */}
-      <aside className="fixed left-0 top-16 bottom-0 w-64 bg-[#e8ecf2] border-r border-[#d8e0eb] z-40 flex flex-col justify-between py-6">
+      <aside className="fixed left-0 top-16 bottom-0 w-64 bg-[#e8ecf2] border-r border-[#d8e0eb] z-40 flex flex-col justify-between py-5 overflow-y-auto">
         <div className="flex flex-col gap-6 px-4">
           <div className="px-3">
             <p className="text-[11px] font-bold text-slate-400 tracking-widest uppercase">
@@ -1278,7 +1276,7 @@ export default function Home() {
 
       {/* MAIN VIEWPORT CONTENT */}
       <div className="pl-64">
-        <main className="w-full pt-16 min-h-screen px-8 py-8">
+        <main className="w-full pt-20 pb-12 px-6 lg:px-8 min-h-screen">
           {activeTab === "overview" && (
             <OverviewView
               vaultBalanceEth={vaultBalanceEth}
