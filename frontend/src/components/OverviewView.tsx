@@ -62,6 +62,10 @@ interface OverviewViewProps {
   copiedId?: string | null;
   onCopy?: (id: string, text: string) => void;
   activePolicyCount?: number;
+  triggerIdempotencyReplay?: () => void;
+  onOpenZombieModal?: () => void;
+  idempotencyBadge?: string | null;
+  onResetVault?: () => void;
 }
 
 export default function OverviewView({
@@ -89,6 +93,10 @@ export default function OverviewView({
   copiedId,
   onCopy,
   activePolicyCount = 4,
+  triggerIdempotencyReplay,
+  onOpenZombieModal,
+  idempotencyBadge,
+  onResetVault,
 }: OverviewViewProps) {
   // Compute percentage calculations
   const limitNum = parseFloat(spendLimitEth) || 0.05;
@@ -552,6 +560,40 @@ export default function OverviewView({
             <span>Simulate Overspend Attack (Attempt 0.1 ETH / ~$250.00)</span>
           </button>
 
+          {/* Wi-Fi Disconnection & Anti-Double-Charge Idempotency Replay Button */}
+          {triggerIdempotencyReplay && (
+            <button
+              type="button"
+              className="flex items-center gap-2 px-6 py-3.5 rounded-full neu-btn font-bold text-sm text-cyan-700 cursor-pointer hover:neu-inset border border-cyan-300"
+              id="btn-wifi-replay"
+              onClick={triggerIdempotencyReplay}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-cyan-500">
+                <path d="M5 12.55a11 11 0 0 1 14.08 0" />
+                <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+                <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+                <line x1="12" y1="20" x2="12.01" y2="20" />
+              </svg>
+              <span>Simulate Connection Drop &amp; Replay (Idempotency)</span>
+            </button>
+          )}
+
+          {/* Zombie Agent Defense & Time-Decaying Budget Button */}
+          {onOpenZombieModal && (
+            <button
+              type="button"
+              className="flex items-center gap-2 px-6 py-3.5 rounded-full neu-btn font-bold text-sm text-indigo-700 cursor-pointer hover:neu-inset border border-indigo-200"
+              id="btn-zombie-defense"
+              onClick={onOpenZombieModal}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 text-indigo-600">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+              <span>Zombie Agent Defense (Time-Decay)</span>
+            </button>
+          )}
+
           {/* Emergency Withdrawal Shortcut Button */}
           {onEmergencyWithdraw && !isDrained && (
             <button
@@ -564,7 +606,32 @@ export default function OverviewView({
               <span>{isWithdrawPending ? "Withdrawing..." : "Emergency Vault Withdrawal"}</span>
             </button>
           )}
+
+          {/* Re-fund Collateral Button if Vault is Drained */}
+          {isDrained && onResetVault && (
+            <button
+              type="button"
+              className="flex items-center gap-2 px-5 py-3 rounded-full neu-btn-primary font-bold text-xs cursor-pointer ml-auto"
+              onClick={onResetVault}
+            >
+              <CheckCircleIcon className="w-3.5 h-3.5 text-emerald-300" />
+              <span>Re-fund Collateral &amp; Reset Vault</span>
+            </button>
+          )}
         </div>
+
+        {/* Idempotency / Double Charge Protection Notification */}
+        {idempotencyBadge && (
+          <div className="p-4 rounded-2xl neu-inset-sm bg-cyan-50/80 border border-cyan-300 flex items-center justify-between animate-fadeIn">
+            <div className="flex items-center gap-3 text-cyan-900 text-xs font-bold">
+              <span className="w-3 h-3 rounded-full bg-cyan-500 animate-pulse"></span>
+              <span>{idempotencyBadge}</span>
+            </div>
+            <span className="text-[10px] font-mono-code text-cyan-800 bg-cyan-100 px-3 py-1 rounded-full border border-cyan-300 font-bold">
+              ZERO DUPLICATE CHARGE ENFORCED
+            </span>
+          </div>
+        )}
 
         {/* Prominent Status Alert Banner (Tactile Neumorphic Warning Surface) */}
         {showRevertBanner && (

@@ -69,14 +69,29 @@ def run_agent_gemini(prompt: str, payment_handler: AutonomousPaymentHandler, api
             """
             return {"taskType": taskType, "workloadUnits": workloadUnits}
 
+        def simulate_wifi_reconnect(taskType: str = "matrix_multiplication", workloadUnits: int = 50):
+            """Simulates network Wi-Fi drop after invoice settlement and re-requests deliverable to verify anti-double-charge idempotency at zero duplicate cost ($0.00).
+            """
+            return {"taskType": taskType, "workloadUnits": workloadUnits}
+
+        # Find supported active model candidate (Google updated to 3.6-flash)
+        model_name = "gemini-3.6-flash"
+        for candidate in ["gemini-3.6-flash", "gemini-flash-latest", "gemini-2.5-flash", "gemini-1.5-flash"]:
+            try:
+                test_model = genai.GenerativeModel(candidate)
+                model_name = candidate
+                break
+            except Exception:
+                continue
+
         model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
-            tools=[run_cloud_compute],
+            model_name=model_name,
+            tools=[run_cloud_compute, simulate_wifi_reconnect],
             system_instruction=(
                 "You are an autonomous AI agent authorized to purchase cloud compute resources "
                 "using machine payments (HTTP 402) through an on-chain budget vault. "
-                "When computationally intensive tasks or matrix multiplications are requested, "
-                "you MUST call the run_cloud_compute tool."
+                "When computationally intensive tasks or matrix multiplications are requested, call run_cloud_compute. "
+                "When asked to test Wi-Fi disconnection, dropped connections, retry, or idempotency double-charge protection, call simulate_wifi_reconnect."
             )
         )
 
@@ -87,22 +102,53 @@ def run_agent_gemini(prompt: str, payment_handler: AutonomousPaymentHandler, api
         called_tool = False
         for part in response.parts:
             fn = getattr(part, "function_call", None)
-            if fn and fn.name == "run_cloud_compute":
+            if fn and fn.name in ["run_cloud_compute", "simulate_wifi_reconnect"]:
                 called_tool = True
                 fn_args = dict(fn.args)
                 task_type = fn_args.get("taskType", "matrix_multiplication")
                 workload_units = int(fn_args.get("workloadUnits", 50))
-                print(f"🧠 [Gemini Decision] Tool invocation triggered: run_cloud_compute(taskType='{task_type}', workloadUnits={workload_units})")
+                is_wifi = fn.name == "simulate_wifi_reconnect" or any(w in prompt.lower() for w in ["wifi", "disconnect", "reconnect", "retry", "idempot"])
+
+                print(f"🧠 [Gemini Decision] Tool invocation triggered: {fn.name}(taskType='{task_type}', workloadUnits={workload_units})")
 
                 try:
+                    # Step 1: Initial execution and settlement
                     result = payment_handler.execute_paid_request(
                         endpoint="/api/v1/service/compute",
                         payload={"taskType": task_type, "workloadUnits": workload_units}
                     )
+
+                    # Step 2: Wi-Fi Reconnect & Idempotency Replay
+                    if is_wifi and payment_handler.paid_invoices:
+                        print("\n📡 [Wi-Fi Drop Simulated] Network connection dropped after payment authorization.")
+                        print("📡 [Reconnecting...] Restoring connection to seller/provider...")
+                        print("📡 [Replay Deliverable Request] Submitting settled invoice credentials without paying a second time...")
+
+                        import httpx
+                        last_invoice_id = list(payment_handler.paid_invoices.keys())[-1]
+                        last_tx = payment_handler.paid_invoices[last_invoice_id]
+
+                        with httpx.Client(timeout=payment_handler.timeout) as client:
+                            replay_res = client.post(
+                                f"{payment_handler.provider_url}/api/v1/service/compute",
+                                json={"taskType": task_type, "workloadUnits": workload_units},
+                                headers={
+                                    "Content-Type": "application/json",
+                                    "X-Payment-Id": last_invoice_id,
+                                    "X-Payment-TxHash": last_tx,
+                                }
+                            )
+                            replay_data = replay_res.json()
+                            if replay_data.get("idempotencyHit"):
+                                print(f"\n✨ [RECONNECT SUCCESS] Invoice {last_invoice_id} reused. Data delivered from cache at $0.00 extra cost.")
+                                print(f"🛡️  Idempotency Verified — 0 ETH Deducted on Replay. Digest: {replay_data.get('contentHash')}\n")
+                                result["idempotencyVerified"] = True
+                                result["duplicateCostEth"] = "0.00"
+
                     # Send tool result back to Gemini for final summary
                     tool_response_part = genai.protos.Part(
                         function_response=genai.protos.FunctionResponse(
-                            name="run_cloud_compute",
+                            name=fn.name,
                             response={"result": result}
                         )
                     )
@@ -115,7 +161,7 @@ def run_agent_gemini(prompt: str, payment_handler: AutonomousPaymentHandler, api
         if not called_tool:
             text_resp = response.text
             print(f"\n🤖 [Gemini Response]:\n{text_resp}")
-            if any(term in text_resp.lower() for term in ["matrix", "compute", "gpu", "render", "calculate"]):
+            if any(term in text_resp.lower() for term in ["matrix", "compute", "gpu", "render", "calculate", "wifi", "idempot"]):
                 print("💡 [Agent Dispatch] Executing cloud compute based on Gemini recommendations...")
                 run_agent_autonomous(prompt, payment_handler)
 

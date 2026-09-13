@@ -63,56 +63,108 @@ export interface DbInvoice {
   createdAt: string;
 }
 
-let memoryTransactions: DbTransaction[] = [
-  {
-    id: 1,
-    txHash: "0x4a5b6c7d8e9f0123456789abcdef0123456789abcdef0123456789abcdef0123",
-    paymentId: "inv_98a7",
-    providerAddress: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-    amountEth: "0.0010 ETH",
-    amountUsd: "~$2.50",
-    contentHash: "0xa6c9b3d142e88a09f51176b98e72c84ef3381ad7",
-    status: "Anchored On-Chain",
-    gasUsed: "21,432",
-    createdAt: new Date(Date.now() - 12000).toISOString(),
-  },
-  {
-    id: 2,
-    txHash: "0x12b489adcf789456123456789abcdef0123456789abcdef0123456789abcdef0",
-    paymentId: "inv_98a6",
-    providerAddress: "0x14dC79964da2c08b23698B3D3cc7Ca32193d9955",
-    amountEth: "0.0008 ETH",
-    amountUsd: "~$2.00",
-    contentHash: "0x3f1e78891244abce5678901234567890abcdef12",
-    status: "Anchored On-Chain",
-    gasUsed: "21,120",
-    createdAt: new Date(Date.now() - 60000).toISOString(),
-  },
-  {
-    id: 3,
-    txHash: "0x99a8bc45d2e0123456789abcdef0123456789abcdef0123456789abcdef01234",
-    paymentId: "inv_98a5",
-    providerAddress: "0x45B25987140f7b03b3E21b44B29BEfA0F11C8242",
-    amountEth: "0.0012 ETH",
-    amountUsd: "~$3.00",
-    contentHash: "0x9c44567812034981adbcdef0123456789abcdef0",
-    status: "Anchored On-Chain",
-    gasUsed: "22,045",
-    createdAt: new Date(Date.now() - 180000).toISOString(),
-  },
-];
+export interface DbUser {
+  id: number;
+  email: string;
+  username: string;
+  passwordHash?: string;
+  role: string;
+  createdAt: string;
+  lastLogin?: string;
+}
 
-let memoryPolicies: DbPolicy = {
-  walletAddress: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
-  whitelistEnabled: true,
-  circuitBreakerEnabled: true,
-  idempotencyStrict: true,
-  eip712Only: true,
-  dailySpendLimitEth: "0.0500",
-  updatedAt: new Date().toISOString(),
+export interface DbWallet {
+  id: number;
+  userId?: number;
+  walletAddress: string;
+  chainId: number;
+  balanceEth: string;
+  isPrimary: boolean;
+  createdAt: string;
+}
+
+export interface DbSubAgent {
+  id: number;
+  name: string;
+  parentAgent: string;
+  walletAddress: string;
+  spendAllowanceEth: string;
+  spentEth: string;
+  expiresAt: number; // TTL timestamp in epoch seconds
+  status: "ACTIVE" | "SEALED_EXPIRED" | "KILLED";
+  createdAt: string;
+}
+
+// Attach stores to globalThis to survive Next.js module reloading & worker boundaries
+const globalStore = globalThis as unknown as {
+  __memoryTransactions?: DbTransaction[];
+  __memoryPolicies?: DbPolicy;
+  __memoryInvoices?: Record<string, DbInvoice>;
+  __memoryUsers?: DbUser[];
+  __memoryWallets?: DbWallet[];
+  __memorySubAgents?: DbSubAgent[];
 };
 
-let memoryInvoices: Record<string, DbInvoice> = {};
+if (!globalStore.__memoryTransactions) {
+  globalStore.__memoryTransactions = [
+    {
+      id: 1,
+      txHash: "0x4a5b6c7d8e9f0123456789abcdef0123456789abcdef0123456789abcdef0123",
+      paymentId: "inv_98a7",
+      providerAddress: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      amountEth: "0.0010 ETH",
+      amountUsd: "~$2.50",
+      contentHash: "0xa6c9b3d142e88a09f51176b98e72c84ef3381ad7",
+      status: "Anchored On-Chain",
+      gasUsed: "21,432",
+      createdAt: new Date(Date.now() - 12000).toISOString(),
+    },
+    {
+      id: 2,
+      txHash: "0x12b489adcf789456123456789abcdef0123456789abcdef0123456789abcdef0",
+      paymentId: "inv_98a6",
+      providerAddress: "0x14dC79964da2c08b23698B3D3cc7Ca32193d9955",
+      amountEth: "0.0008 ETH",
+      amountUsd: "~$2.00",
+      contentHash: "0x3f1e78891244abce5678901234567890abcdef12",
+      status: "Anchored On-Chain",
+      gasUsed: "21,120",
+      createdAt: new Date(Date.now() - 60000).toISOString(),
+    },
+    {
+      id: 3,
+      txHash: "0x99a8bc45d2e0123456789abcdef0123456789abcdef0123456789abcdef01234",
+      paymentId: "inv_98a5",
+      providerAddress: "0x45B25987140f7b03b3E21b44B29BEfA0F11C8242",
+      amountEth: "0.0012 ETH",
+      amountUsd: "~$3.00",
+      contentHash: "0x9c44567812034981adbcdef0123456789abcdef0",
+      status: "Anchored On-Chain",
+      gasUsed: "22,045",
+      createdAt: new Date(Date.now() - 180000).toISOString(),
+    },
+  ];
+}
+
+if (!globalStore.__memoryPolicies) {
+  globalStore.__memoryPolicies = {
+    walletAddress: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+    whitelistEnabled: true,
+    circuitBreakerEnabled: true,
+    idempotencyStrict: true,
+    eip712Only: true,
+    dailySpendLimitEth: "0.0500",
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+if (!globalStore.__memoryInvoices) {
+  globalStore.__memoryInvoices = {};
+}
+
+let memoryTransactions = globalStore.__memoryTransactions;
+let memoryPolicies = globalStore.__memoryPolicies;
+let memoryInvoices = globalStore.__memoryInvoices;
 
 // ----------------------------------------------------------------------------
 // Database Operations (Neon with Automatic Fallback)
@@ -290,3 +342,246 @@ export async function getInvoice(paymentId: string): Promise<DbInvoice | null> {
   }
   return memoryInvoices[paymentId] || null;
 }
+
+// ----------------------------------------------------------------------------
+// Users & Authentication Operations
+// ----------------------------------------------------------------------------
+
+if (!globalStore.__memoryUsers) {
+  globalStore.__memoryUsers = [
+    {
+      id: 1,
+      email: "judge@hackathon.org",
+      username: "Hackathon Judge",
+      passwordHash: "secure_pass_demo",
+      role: "judge",
+      createdAt: new Date().toISOString(),
+    },
+  ];
+}
+
+if (!globalStore.__memoryWallets) {
+  globalStore.__memoryWallets = [
+    {
+      id: 1,
+      userId: 1,
+      walletAddress: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      chainId: 31337,
+      balanceEth: "0.8500",
+      isPrimary: true,
+      createdAt: new Date().toISOString(),
+    },
+  ];
+}
+
+let memoryUsers = globalStore.__memoryUsers;
+let memoryWallets = globalStore.__memoryWallets;
+
+export async function createUser(data: {
+  email: string;
+  username: string;
+  passwordHash?: string;
+  role?: string;
+  walletAddress?: string;
+}): Promise<{ user: DbUser; wallet: DbWallet }> {
+  const sql = getDbClient();
+  const role = data.role || "judge";
+  const defaultWallet =
+    data.walletAddress && data.walletAddress.startsWith("0x") && data.walletAddress.length === 42
+      ? data.walletAddress
+      : `0x${Array.from({ length: 40 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`;
+
+  if (sql) {
+    try {
+      const userRows = await sql`
+        INSERT INTO users (email, username, password_hash, role)
+        VALUES (${data.email}, ${data.username}, ${data.passwordHash || "judge_pass"}, ${role})
+        RETURNING id, email, username, role, created_at AS "createdAt"
+      `;
+      const newUser = (userRows as any[])[0] as DbUser;
+
+      const walletRows = await sql`
+        INSERT INTO wallets (user_id, wallet_address, chain_id, balance_eth, is_primary)
+        VALUES (${newUser.id}, ${defaultWallet}, 31337, '0.8500', TRUE)
+        RETURNING id, user_id AS "userId", wallet_address AS "walletAddress", chain_id AS "chainId", balance_eth AS "balanceEth", is_primary AS "isPrimary", created_at AS "createdAt"
+      `;
+      const newWallet = (walletRows as any[])[0] as DbWallet;
+
+      return { user: newUser, wallet: newWallet };
+    } catch (err) {
+      console.warn("Neon createUser fallback:", err);
+    }
+  }
+
+  const newUser: DbUser = {
+    id: Date.now(),
+    email: data.email,
+    username: data.username,
+    role,
+    createdAt: new Date().toISOString(),
+  };
+  memoryUsers.push(newUser);
+
+  const newWallet: DbWallet = {
+    id: Date.now() + 1,
+    userId: newUser.id,
+    walletAddress: defaultWallet,
+    chainId: 31337,
+    balanceEth: "0.8500",
+    isPrimary: true,
+    createdAt: new Date().toISOString(),
+  };
+  memoryWallets.push(newWallet);
+
+  return { user: newUser, wallet: newWallet };
+}
+
+export async function findUserByEmail(email: string): Promise<DbUser | null> {
+  const sql = getDbClient();
+  if (sql) {
+    try {
+      const rows = await sql`
+        SELECT id, email, username, password_hash AS "passwordHash", role, created_at AS "createdAt", last_login AS "lastLogin"
+        FROM users
+        WHERE email = ${email}
+        LIMIT 1
+      `;
+      const list = rows as any[];
+      if (list.length > 0) return list[0] as DbUser;
+    } catch (err) {
+      console.warn("Neon findUserByEmail fallback:", err);
+    }
+  }
+  return memoryUsers.find((u) => u.email.toLowerCase() === email.toLowerCase()) || null;
+}
+
+export async function fetchUserWallets(userId?: number): Promise<DbWallet[]> {
+  const sql = getDbClient();
+  if (sql) {
+    try {
+      const rows = userId
+        ? await sql`
+            SELECT id, user_id AS "userId", wallet_address AS "walletAddress", chain_id AS "chainId", balance_eth AS "balanceEth", is_primary AS "isPrimary", created_at AS "createdAt"
+            FROM wallets
+            WHERE user_id = ${userId}
+          `
+        : await sql`
+            SELECT id, user_id AS "userId", wallet_address AS "walletAddress", chain_id AS "chainId", balance_eth AS "balanceEth", is_primary AS "isPrimary", created_at AS "createdAt"
+            FROM wallets
+            LIMIT 10
+          `;
+      const list = rows as any[];
+      if (list.length > 0) return list as DbWallet[];
+    } catch (err) {
+      console.warn("Neon fetchUserWallets fallback:", err);
+    }
+  }
+  return userId ? memoryWallets.filter((w) => w.userId === userId) : memoryWallets;
+}
+
+// ----------------------------------------------------------------------------
+// Sub-Agents & Zombie Agent Defense Operations
+// ----------------------------------------------------------------------------
+
+if (!globalStore.__memorySubAgents) {
+  globalStore.__memorySubAgents = [
+    {
+      id: 1,
+      name: "Worker-Scraper-01",
+      parentAgent: "Orchestrator-Main",
+      walletAddress: "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+      spendAllowanceEth: "0.0100",
+      spentEth: "0.0020",
+      expiresAt: Math.floor(Date.now() / 1000) + 300, // 5 min TTL
+      status: "ACTIVE",
+      createdAt: new Date().toISOString(),
+    },
+    {
+      id: 2,
+      name: "Worker-GPUSolver-02",
+      parentAgent: "Orchestrator-Main",
+      walletAddress: "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc",
+      spendAllowanceEth: "0.0150",
+      spentEth: "0.0010",
+      expiresAt: Math.floor(Date.now() / 1000) + 420, // 7 min TTL
+      status: "ACTIVE",
+      createdAt: new Date().toISOString(),
+    },
+    {
+      id: 3,
+      name: "Worker-Indexer-03",
+      parentAgent: "Orchestrator-Main",
+      walletAddress: "0x976EA74026E726554dB657fA54763abd0C3a0aa9",
+      spendAllowanceEth: "0.0050",
+      spentEth: "0.0000",
+      expiresAt: Math.floor(Date.now() / 1000) + 180, // 3 min TTL
+      status: "ACTIVE",
+      createdAt: new Date().toISOString(),
+    },
+  ];
+}
+
+let memorySubAgents = globalStore.__memorySubAgents;
+
+export async function fetchSubAgents(): Promise<DbSubAgent[]> {
+  const sql = getDbClient();
+  if (sql) {
+    try {
+      const rows = await sql`
+        SELECT 
+          id, 
+          name, 
+          parent_agent AS "parentAgent", 
+          wallet_address AS "walletAddress", 
+          spend_allowance_eth AS "spendAllowanceEth", 
+          spent_eth AS "spentEth", 
+          expires_at AS "expiresAt", 
+          status, 
+          created_at AS "createdAt"
+        FROM sub_agents
+        ORDER BY id ASC
+      `;
+      const list = rows as any[];
+      if (list.length > 0) return list as DbSubAgent[];
+    } catch (err) {
+      console.warn("Neon fetchSubAgents fallback:", err);
+    }
+  }
+  return memorySubAgents;
+}
+
+export async function triggerZombieLockout(): Promise<{ lockedCount: number; subAgents: DbSubAgent[] }> {
+  // Simulates orchestrator crash: seals all sub-agents whose TTL expired or marks all as sealed
+  memorySubAgents = memorySubAgents.map((s) => ({
+    ...s,
+    status: "SEALED_EXPIRED",
+    expiresAt: Math.floor(Date.now() / 1000),
+  }));
+
+  const sql = getDbClient();
+  if (sql) {
+    try {
+      await sql`
+        UPDATE sub_agents 
+        SET status = 'SEALED_EXPIRED', expires_at = EXTRACT(EPOCH FROM NOW())::BIGINT
+      `;
+    } catch (err) {
+      console.warn("Neon triggerZombieLockout fallback:", err);
+    }
+  }
+
+  return { lockedCount: memorySubAgents.length, subAgents: memorySubAgents };
+}
+
+export async function clearTransactions(): Promise<void> {
+  memoryTransactions = [];
+  const sql = getDbClient();
+  if (sql) {
+    try {
+      await sql`DELETE FROM transactions`;
+    } catch (err) {
+      console.warn("Neon clearTransactions fallback:", err);
+    }
+  }
+}
+

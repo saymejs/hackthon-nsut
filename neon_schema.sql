@@ -72,6 +72,47 @@ CREATE TABLE IF NOT EXISTS node_telemetry (
 
 CREATE INDEX IF NOT EXISTS idx_telemetry_created_at ON node_telemetry(created_at DESC);
 
+-- 6. Users Table: Judge and Enterprise authentication & profile management
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    username VARCHAR(64) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role VARCHAR(32) DEFAULT 'judge',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    last_login TIMESTAMP WITH TIME ZONE
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+
+-- 7. Wallets Table: Linked Web3 & Vault addresses per authenticated user
+CREATE TABLE IF NOT EXISTS wallets (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    wallet_address VARCHAR(64) NOT NULL,
+    chain_id INTEGER DEFAULT 31337,
+    balance_eth VARCHAR(32) DEFAULT '0.8500',
+    is_primary BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_wallets_address ON wallets(wallet_address);
+
+-- 8. Sub-Agents Table: Time-Decaying Budgets & Zombie Agent Drain Defense
+CREATE TABLE IF NOT EXISTS sub_agents (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(64) NOT NULL,
+    parent_agent VARCHAR(64) NOT NULL,
+    wallet_address VARCHAR(64) NOT NULL,
+    spend_allowance_eth VARCHAR(32) NOT NULL,
+    spent_eth VARCHAR(32) DEFAULT '0.0000',
+    expires_at BIGINT NOT NULL, -- Epoch seconds TTL for automatic budget self-destruct
+    status VARCHAR(32) DEFAULT 'ACTIVE', -- 'ACTIVE', 'SEALED_EXPIRED', 'KILLED'
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_subagents_expires ON sub_agents(expires_at);
+
 -- Seed initial default policy if empty
 INSERT INTO agent_policies (wallet_address, whitelist_enabled, circuit_breaker_enabled, idempotency_strict, eip712_only)
 SELECT '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC', TRUE, TRUE, TRUE, TRUE
