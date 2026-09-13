@@ -34,6 +34,8 @@ export interface TerminalLog {
 }
 
 interface OverviewViewProps {
+  vaultAddress?: string;
+  ownerAddress?: string;
   vaultBalanceEth: string;
   spendLimitEth: string;
   totalSpentEth: string;

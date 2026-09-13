@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchSubAgents, triggerZombieLockout, DbSubAgent } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const subAgents = await fetchSubAgents();
   const now = Math.floor(Date.now() / 1000);

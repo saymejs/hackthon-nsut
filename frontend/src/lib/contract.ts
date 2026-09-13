@@ -87,7 +87,9 @@ export const VAULT_ABI = [
   },
 ] as const;
 
+const isSepolia = RPC_URL.toLowerCase().includes("sepolia");
+
 export const publicClient = createPublicClient({
-  chain: hardhat,
+  chain: isSepolia ? sepolia : hardhat,
   transport: http(RPC_URL),
 });

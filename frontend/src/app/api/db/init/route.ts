@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getDbClient, isNeonConfigured } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   if (!isNeonConfigured) {
     return NextResponse.json({

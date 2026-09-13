@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchTransactions, addTransaction, clearTransactions, isNeonConfigured } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const transactions = await fetchTransactions();

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { saveInvoice, getInvoice } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 // In-memory cache for idempotency and replay checks
 const memoryCache: Record<string, any> = {};
 const redeemedTxHashes: Record<string, string> = {};
